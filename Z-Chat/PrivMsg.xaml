@@ -1,0 +1,19 @@
+﻿<Window x:Class="ZChat.PrivMsg"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="PrivMsg" Height="300" Width="500"
+    Closing="Window_Closing" StateChanged="Window_StateChanged"
+    IsVisibleChanged="Window_IsVisibleChanged"
+    Loaded="Window_Loaded"
+    Activated="Window_Activated">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <FlowDocumentScrollViewer Grid.Row="0" Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Name="chatScrollViewer" >
+            <FlowDocument Name="chatFlowDoc" PagePadding="0" FontSize="12"/>
+        </FlowDocumentScrollViewer>
+        <TextBox Grid.Row="1" Grid.Column="0" Name="inputTextBox" KeyUp="inputTextBox_KeyUp" FontSize="12"/>
+    </Grid>
+</Window>
