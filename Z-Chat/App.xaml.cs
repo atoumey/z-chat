@@ -18,6 +18,9 @@ namespace ZChat
         {
             Application.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(UnhandledException);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
+
+            ChannelWindow window = new ChannelWindow();
+            window.Show();
         }
 
         void AppDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)

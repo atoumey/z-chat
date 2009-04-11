@@ -976,36 +976,32 @@ namespace ZChat
             }
         }
 
+        private void AddBoldOrRun(InlineCollection inlines, string text, SolidColorBrush brush, bool bold)
+        {
+            Run r = new Run(text);
+            r.Foreground = brush;
+
+            if (bold)
+                inlines.Add(new Bold(r));
+            else
+                inlines.Add(r);
+        }
+
         private void AddNonHyperlinkText(InlineCollection inlines, string text, SolidColorBrush brush)
         {
-            int boldPos = 0;
-            int boldEndPos = 0;
-
-            boldPos = text.IndexOf((char)2);
-            boldEndPos = text.LastIndexOf((char)2);
-
-            Run r = new Run();
-            if (boldPos > -1 && boldEndPos > -1)
+            int mostRecentBoldCharPos = 0;
+            bool boldOn = false;
+            for (int curPos = 0; curPos < text.Length; curPos++)
             {
-                r = new Run(text.Substring(0, boldPos));
-                r.Foreground = brush;
-                inlines.Add(r);
-                r = new Run(text.Substring(boldPos + 1, boldEndPos - boldPos - 1));
-                r.Foreground = brush;
-                inlines.Add(new Bold(r));
-                if (boldEndPos < text.Length)
+                if (text[curPos] == (char)2)
                 {
-                    r = new Run(text.Substring(boldEndPos + 1, text.Length - boldEndPos - 1));
-                    r.Foreground = brush;
-                    inlines.Add(r);
+                    AddBoldOrRun(inlines, text.Substring(mostRecentBoldCharPos, curPos - mostRecentBoldCharPos), brush, boldOn);
+                    mostRecentBoldCharPos = curPos + 1;
+                    boldOn = !boldOn;
                 }
             }
-            else
-            {
-                r = new Run(text);
-                r.Foreground = brush;
-                inlines.Add(r);
-            }
+
+            AddBoldOrRun(inlines, text.Substring(mostRecentBoldCharPos, text.Length - mostRecentBoldCharPos), brush, boldOn);
         }
 
         public string PairsToPlainText(ColorTextPair[] colorTextPairs)
