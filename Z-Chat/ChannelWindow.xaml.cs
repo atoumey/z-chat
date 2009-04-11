@@ -25,7 +25,7 @@ namespace ZChat
 {
     delegate void VoidDelegate();
 
-    public partial class ChannelWindow : ActivityWindow
+    public partial class ChannelWindow : ChatWindow
     {
         public static string ISOLATED_FILE_NAME = "ChatConfig.txt";
 
@@ -34,41 +34,24 @@ namespace ZChat
         private string topic;
         private string nick = System.Environment.UserName;
         
-        public bool HighlightTrayIconForJoinsAndQuits = true;
-
         public SolidColorBrush UsersBack { get { return _usersBack; } set { _usersBack = value; usersListBox.Background = value; } }
         private SolidColorBrush _usersBack = Brushes.White;
         public SolidColorBrush UsersFore { get { return _usersFore; } set { _usersFore = value; usersListBox.Foreground = value; } }
         private SolidColorBrush _usersFore = Brushes.Black;
-        public SolidColorBrush EntryBack { get { return _entryBack; } set { _entryBack = value; inputTextBox.Background = value; foreach (PrivMsg privWin in queryWindows.Values) privWin.SetInputBackground(_entryBack); } }
-        private SolidColorBrush _entryBack = Brushes.White;
-        public SolidColorBrush EntryFore { get { return _entryFore; } set { _entryFore = value; inputTextBox.Foreground = value; foreach (PrivMsg privWin in queryWindows.Values) privWin.SetInputForeground(_entryFore); } }
-        private SolidColorBrush _entryFore = Brushes.Black;
-        public SolidColorBrush ChatBack { get { return _chatBack; } set { _chatBack = value; chatFlowDoc.Background = value; topicTextBox.Background = value; foreach (PrivMsg privWin in queryWindows.Values) privWin.SetChatBackground(_chatBack); } }
-        private SolidColorBrush _chatBack = Brushes.White;
-        public SolidColorBrush TimeFore = Brushes.Black;
-        public SolidColorBrush NickFore = Brushes.Black;
-        public SolidColorBrush BracketFore = Brushes.Black;
-        public SolidColorBrush TextFore { get { return _textFore; } set { _textFore = value; if (topic != null) UpdateTopic(topic); } }
-        private SolidColorBrush _textFore = Brushes.Black;
-        public SolidColorBrush QueryTextFore = Brushes.Maroon;
-        public SolidColorBrush OwnNickFore = Brushes.Green;
-        public SolidColorBrush LinkFore = Brushes.Black;
 
-        public FontFamily Font
+        public bool HighlightTrayIconForJoinsAndQuits = true;
+
+        public new FontFamily Font
         {
-            get { return _font; }
+            get { return base.Font; }
             set
             {
-                _font = value;
-                usersListBox.FontFamily = Font;
-                inputTextBox.FontFamily = Font;
-                chatFlowDoc.FontFamily = Font;
+                base.Font = value;
+                usersListBox.FontFamily = base.Font;
+                topicTextBox.FontFamily = base.Font;
             }
         }
-        private FontFamily _font = new FontFamily("Arial");
 
-        public string TimeStampFormat = "HH:mm:ss ";
         public bool WindowsForPrivMsgs = false;
         public string LastFMUserName = "";
 
@@ -81,7 +64,6 @@ namespace ZChat
         public ChannelWindow()
         {
             InitializeComponent();
-            EntryHistory.Add("");
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -97,8 +79,6 @@ namespace ZChat
             LoadConfigurationFile();
             
             usersListBox.FontFamily = Font;
-            inputTextBox.FontFamily = Font;
-            chatFlowDoc.FontFamily = Font;
             topicTextBox.Document.FontFamily = Font;
 
             commandLineArgs = System.Environment.GetCommandLineArgs();
@@ -529,6 +509,8 @@ namespace ZChat
             Dispatcher.BeginInvoke(DispatcherPriority.Normal, new VoidDelegate(delegate
             {
                 usersListBox.ItemsSource = userList;
+                Users.Clear();
+                foreach (string user in userList) Users.Add(user);
             }));
         }
 
@@ -547,77 +529,9 @@ namespace ZChat
                 ShowActivity();
         }
 
-        public int NextHistoricalEntry;
-        public List<string> EntryHistory = new List<string>();
-
-        private List<string> NickCompletionList;
-        private int CurrentNickCompletion;
-
-        private void FindMatchingNicks(string nickPart)
-        {
-            NickCompletionList = new List<string>();
-            foreach (string nick in usersListBox.Items)
-            {
-                string actualNick;
-                if (nick.StartsWith("@") || nick.StartsWith("+") || nick.StartsWith("%"))
-                    actualNick = nick.Substring(1);
-                else
-                    actualNick = nick;
-                if (actualNick.StartsWith(nickPart, StringComparison.CurrentCultureIgnoreCase))
-                    NickCompletionList.Add(actualNick);
-            }
-        }
-
         private void inputTextBox_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Tab)
-            {
-                int lastSpace = inputTextBox.Text.LastIndexOf(" ");
-                if (lastSpace != -1 && inputTextBox.Text[lastSpace - 1] == ':' && lastSpace == inputTextBox.Text.Length - 1)
-                {
-                    lastSpace = inputTextBox.Text.Substring(0, lastSpace).LastIndexOf(" ");
-                }
-
-                if (NickCompletionList == null)
-                {
-                    string nickPart;
-                    nickPart = inputTextBox.Text.Substring(lastSpace + 1);
-                    if (string.IsNullOrEmpty(nickPart))
-                    {
-                        e.Handled = true;
-                        return;
-                    }
-                    FindMatchingNicks(nickPart);
-                    CurrentNickCompletion = 0;
-                }
-
-                if (NickCompletionList.Count > 0)
-                {
-                    if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
-                    {
-                        CurrentNickCompletion--;
-                        if (CurrentNickCompletion == -1)
-                            CurrentNickCompletion = NickCompletionList.Count - 1;
-                        if (CurrentNickCompletion == 0)
-                            inputTextBox.Text = inputTextBox.Text.Substring(0, lastSpace + 1) + NickCompletionList[NickCompletionList.Count - 1];
-                        else
-                            inputTextBox.Text = inputTextBox.Text.Substring(0, lastSpace + 1) + NickCompletionList[CurrentNickCompletion - 1];
-                    }
-                    else
-                    {
-                        inputTextBox.Text = inputTextBox.Text.Substring(0, lastSpace + 1) + NickCompletionList[CurrentNickCompletion];
-                        CurrentNickCompletion++;
-                        if (CurrentNickCompletion >= NickCompletionList.Count)
-                            CurrentNickCompletion = 0;
-                    }
-
-                    if (lastSpace == -1)
-                        inputTextBox.Text += ": ";
-                }
-                inputTextBox.CaretIndex = inputTextBox.Text.Length;
-                e.Handled = true;
-            }
-            else if ((e.Key == Key.R || e.SystemKey == Key.R) && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)
+            if ((e.Key == Key.R || e.SystemKey == Key.R) && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)
                                       || Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt)))
             {
                 if (string.IsNullOrEmpty(inputTextBox.Text) && !string.IsNullOrEmpty(lastQuerySender))
@@ -628,40 +542,10 @@ namespace ZChat
             }
         }
 
-        private void inputTextBox_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.Key != Key.Tab && e.Key != Key.LeftShift && e.Key != Key.RightShift)
-                NickCompletionList = null;
-            if (e.Key == Key.Enter)
-            {
-                ParseUserInput();
-                inputTextBox.Clear();
-            }
-            else if (e.Key == Key.Up)
-            {
-                inputTextBox.Text = EntryHistory[NextHistoricalEntry];
-                inputTextBox.CaretIndex = inputTextBox.Text.Length;
-                NextHistoricalEntry++;
-                if (NextHistoricalEntry == EntryHistory.Count)
-                    NextHistoricalEntry = 0;
-            }
-            else if (e.Key == Key.Down)
-            {
-                NextHistoricalEntry--;
-                if (NextHistoricalEntry == -1)
-                    NextHistoricalEntry = EntryHistory.Count - 1;
-                if (NextHistoricalEntry == 0)
-                    inputTextBox.Text = EntryHistory[EntryHistory.Count - 1];
-                else
-                    inputTextBox.Text = EntryHistory[NextHistoricalEntry - 1];
-            }
-        }
-
-        private void ParseUserInput()
+        private void ParseUserInput(object sender, string input)
         {
             try
             {
-                string input = inputTextBox.Text;
                 string[] words = inputTextBox.Text.Split(' ');
 
                 if (input.Equals("/clear", StringComparison.CurrentCultureIgnoreCase))
@@ -793,16 +677,6 @@ namespace ZChat
                                new ColorTextPair[] { new ColorTextPair(TextFore, inputTextBox.Text) });
                     }));
                 }
-
-                if (!string.IsNullOrEmpty(input))
-                {
-                    NextHistoricalEntry = 1;
-                    if (EntryHistory.Count == 100)
-                    {
-                        EntryHistory.RemoveAt(EntryHistory.Count - 1);
-                    }
-                    EntryHistory.Insert(1, input);
-                }
             }
             catch (Exception ex)
             {
@@ -854,170 +728,6 @@ namespace ZChat
             }
         }
 
-        private void Output(ColorTextPair[] sourcePairs, ColorTextPair[] textPairs)
-        {
-            string timeStamp;
-            timeStamp = DateTime.Now.ToString(TimeStampFormat);
-            TimeSourceTextGroup group = new TimeSourceTextGroup(timeStamp, sourcePairs, textPairs);
-
-            AddOutput(group);
-
-            DependencyObject DO = VisualTreeHelper.GetChild(chatScrollViewer, 0);
-            while (!(DO is ScrollViewer))
-                DO = VisualTreeHelper.GetChild(DO, 0);
-            ScrollViewer sv = DO as ScrollViewer;
-
-            if (sv.VerticalOffset == sv.ScrollableHeight)
-                sv.ScrollToBottom();
-        }
-
-        protected Thickness paragraphPadding = new Thickness(2.0, 0.0, 0.0, 0.0);
-        protected static Regex HyperlinkPattern = new Regex("(^|[ ]|((https?|ftp):\\/\\/))(([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|net|org|info|biz|gov|name|edu|[a-zA-Z][a-zA-Z]))(:[0-9]+)?((\\/|\\?)[^ \"]*[^ ,;\\.:\">)])?", RegexOptions.Compiled);
-        public void AddOutput(TimeSourceTextGroup group)
-        {
-            Paragraph p = new Paragraph();
-            p.Padding = paragraphPadding;
-            p.TextAlignment = TextAlignment.Left;
-
-            Span timeSourceSpan = new Span();
-            Run timeRun = new Run(group.Time);
-            timeRun.Foreground = TimeFore;
-            p.Inlines.Add(timeRun);
-
-            ColorTextPair[] allPairs = new ColorTextPair[group.Source.Length + 1 + group.Text.Length];
-            for (int ii = 0; ii < group.Source.Length; ii++) allPairs[ii] = group.Source[ii];
-            allPairs[group.Source.Length] = new ColorTextPair(TextFore, " ");
-            for (int ii = 0; ii < group.Text.Length; ii++) allPairs[ii + group.Source.Length + 1] = group.Text[ii];
-
-            AddInlines(p.Inlines, allPairs, true);
-            
-            double indent = new FormattedText(timeRun.Text + PairsToPlainText(group.Source) + "W",
-                System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                new Typeface(chatFlowDoc.FontFamily, chatFlowDoc.FontStyle, chatFlowDoc.FontWeight, chatFlowDoc.FontStretch),
-                12.0, Brushes.Black).Width;
-            p.Margin = new Thickness(indent, 0.0, 0.0, 0.0);
-            p.TextIndent = indent * -1;
-
-            chatFlowDoc.Blocks.Add(p);
-        }
-
-        public void AddInlines(InlineCollection inlineCollection, ColorTextPair[] pairs, bool allowHyperlinks)
-        {
-            Run run;
-            foreach (ColorTextPair pair in pairs)
-            {
-                bool hasHyperlinks = false;
-                if (allowHyperlinks)
-                {
-                    if (!string.IsNullOrEmpty(pair.Text))
-                    {
-                        MatchCollection matches = HyperlinkPattern.Matches(pair.Text);
-                        if (matches.Count > 0)
-                        {
-                            hasHyperlinks = true;
-                            string linkText;
-                            int linkStart = 0, linkLength = 0;
-                            int curPos = 0;
-                            foreach (Match match in matches)
-                            {
-                                if (match.Value.StartsWith(" "))
-                                {
-                                    linkStart = match.Index + 1;
-                                    linkLength = match.Length - 1;
-                                }
-                                else
-                                {
-                                    linkStart = match.Index;
-                                    linkLength = match.Length;
-                                }
-                                linkText = pair.Text.Substring(linkStart, linkLength);
-
-                                Hyperlink link = new Hyperlink(new Run(linkText));
-                                link.Foreground = LinkFore;
-                                link.SetValue(KeyboardNavigation.IsTabStopProperty, false);
-                                //if (link.FontStyle) link.TextDecorations.Add(TextDecorations.Underline);
-                                link.Click += new RoutedEventHandler(link_Click);
-                                link.Tag = linkText;
-                                run = new Run(pair.Text.Substring(curPos, linkStart - curPos));
-                                run.Foreground = pair.Color;
-                                if (linkStart > 0) inlineCollection.Add(run);
-                                curPos = linkStart + linkLength;
-                                inlineCollection.Add(link);
-                            }
-                            if (curPos < pair.Text.Length)
-                            {
-                                run = new Run(pair.Text.Substring(curPos, pair.Text.Length - curPos));
-                                run.Foreground = pair.Color;
-                                inlineCollection.Add(run);
-                            }
-                        }
-                    }
-                }
-                if (hasHyperlinks == false)
-                {
-                    AddNonHyperlinkText(inlineCollection, pair.Text, pair.Color);
-                    //run = new Run(pair.Text);
-                    //run.Foreground = pair.Color;
-                    //inlineCollection.Add(run);
-                }
-            }
-        }
-
-        private void AddBoldOrRun(InlineCollection inlines, string text, SolidColorBrush brush, bool bold)
-        {
-            Run r = new Run(text);
-            r.Foreground = brush;
-
-            if (bold)
-                inlines.Add(new Bold(r));
-            else
-                inlines.Add(r);
-        }
-
-        private void AddNonHyperlinkText(InlineCollection inlines, string text, SolidColorBrush brush)
-        {
-            int mostRecentBoldCharPos = 0;
-            bool boldOn = false;
-            for (int curPos = 0; curPos < text.Length; curPos++)
-            {
-                if (text[curPos] == (char)2)
-                {
-                    AddBoldOrRun(inlines, text.Substring(mostRecentBoldCharPos, curPos - mostRecentBoldCharPos), brush, boldOn);
-                    mostRecentBoldCharPos = curPos + 1;
-                    boldOn = !boldOn;
-                }
-            }
-
-            AddBoldOrRun(inlines, text.Substring(mostRecentBoldCharPos, text.Length - mostRecentBoldCharPos), brush, boldOn);
-        }
-
-        public string PairsToPlainText(ColorTextPair[] colorTextPairs)
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (ColorTextPair ctp in colorTextPairs)
-            {
-                sb.Append(ctp.Text);
-            }
-            return sb.ToString();
-        }
-
-        void link_Click(object sender, RoutedEventArgs e)
-        {
-            new Thread(new ParameterizedThreadStart(delegate(object link)
-            {
-                try
-                {
-                    ProcessStartInfo psi = new ProcessStartInfo(link.ToString());
-                    psi.UseShellExecute = true;
-                    System.Diagnostics.Process.Start(psi);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-            })).Start(((sender as Hyperlink).Tag as string).Trim());
-        }
-
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.T && (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)))
@@ -1034,36 +744,14 @@ namespace ZChat
             if (queryWindows.ContainsKey(queriedUser))
                 queryWindows.Remove(queriedUser);
         }
-    }
 
-    public struct TimeSourceTextGroup
-    {
-        public string Time;
-        public ColorTextPair[] Source;
-        public ColorTextPair[] Text;
-
-        public TimeSourceTextGroup(string time, ColorTextPair[] source, ColorTextPair[] text)
+        private void Window_Initialized(object sender, EventArgs e)
         {
-            Time = time;
-            Source = source;
-            Text = text;
-        }
-    }
+            Document = chatFlowDoc;
+            DocumentScrollViewer = chatScrollViewer;
+            InputBox = inputTextBox;
 
-    public struct ColorTextPair
-    {
-        public SolidColorBrush Color;
-        public string Text;
-
-        public ColorTextPair(SolidColorBrush color, string text)
-        {
-            Color = color;
-            Text = text;
-        }
-
-        public ColorTextPair[] Append(SolidColorBrush color, string text)
-        {
-            return new ColorTextPair[] { this, new ColorTextPair(color, text) };
+            UserInput += ParseUserInput;
         }
     }
 }

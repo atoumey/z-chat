@@ -19,14 +19,11 @@ using System.Xml.Linq;
 
 namespace ZChat
 {
-    public partial class PrivMsg : ActivityWindow
+    public partial class PrivMsg : ChatWindow
     {
         ChannelWindow ChatWindow;
         IrcClient irc;
         string queriedUser;
-
-        public int NextHistoricalEntry;
-        public List<string> EntryHistory = new List<string>();
 
         public PrivMsg(ChannelWindow chatWindow, IrcClient ircClient, string queriedUserName)
         {
@@ -38,11 +35,10 @@ namespace ZChat
             RestoreType = chatWindow.RestoreType;
 
             UpdateTitle();
-            EntryHistory.Add("");
 
-            inputTextBox.Background = chatWindow.EntryBack;
-            inputTextBox.Foreground = chatWindow.EntryFore;
-            chatFlowDoc.Background = chatWindow.ChatBack;
+            InputBox.Background = chatWindow.EntryBack;
+            InputBox.Foreground = chatWindow.EntryFore;
+            Document.Background = chatWindow.ChatBack;
         }
 
         private void UpdateTitle()
@@ -55,44 +51,14 @@ namespace ZChat
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            inputTextBox.FontFamily = ChatWindow.Font;
-            chatFlowDoc.FontFamily = ChatWindow.Font;
-
-            inputTextBox.Focus();
+            InputBox.FontFamily = ChatWindow.Font;
+            Document.FontFamily = ChatWindow.Font;
         }
 
-        private void inputTextBox_KeyUp(object sender, KeyEventArgs e)
-        {
-           if (e.Key == Key.Enter)
-            {
-                ParseUserInput();
-                inputTextBox.Clear();
-            }
-            else if (e.Key == Key.Up)
-            {
-                inputTextBox.Text = EntryHistory[NextHistoricalEntry];
-                inputTextBox.CaretIndex = inputTextBox.Text.Length;
-                NextHistoricalEntry++;
-                if (NextHistoricalEntry == EntryHistory.Count)
-                    NextHistoricalEntry = 0;
-            }
-            else if (e.Key == Key.Down)
-            {
-                NextHistoricalEntry--;
-                if (NextHistoricalEntry == -1)
-                    NextHistoricalEntry = EntryHistory.Count - 1;
-                if (NextHistoricalEntry == 0)
-                    inputTextBox.Text = EntryHistory[EntryHistory.Count - 1];
-                else
-                    inputTextBox.Text = EntryHistory[NextHistoricalEntry - 1];
-            }
-        }
-
-        private void ParseUserInput()
+        private void ParseUserInput(object sender, string input)
         {
             try
             {
-                string input = inputTextBox.Text;
                 string[] words = inputTextBox.Text.Split(' ');
 
                 if (input.Equals("/clear", StringComparison.CurrentCultureIgnoreCase))
@@ -159,16 +125,6 @@ namespace ZChat
                                new ColorTextPair[] { new ColorTextPair(ChatWindow.TextFore, inputTextBox.Text) });
                     }));
                 }
-
-                if (!string.IsNullOrEmpty(input))
-                {
-                    NextHistoricalEntry = 1;
-                    if (EntryHistory.Count == 100)
-                    {
-                        EntryHistory.RemoveAt(EntryHistory.Count - 1);
-                    }
-                    EntryHistory.Insert(1, input);
-                }
             }
             catch (Exception ex)
             {
@@ -220,55 +176,6 @@ namespace ZChat
             }
         }
 
-        public void Output(ColorTextPair[] sourcePairs, ColorTextPair[] textPairs)
-        {
-            string timeStamp;
-            timeStamp = DateTime.Now.ToString(ChatWindow.TimeStampFormat);
-            TimeSourceTextGroup group = new TimeSourceTextGroup(timeStamp, sourcePairs, textPairs);
-
-            AddOutput(group);
-
-            DependencyObject DO = VisualTreeHelper.GetChild(chatScrollViewer, 0);
-            while (!(DO is ScrollViewer))
-                DO = VisualTreeHelper.GetChild(DO, 0);
-            ScrollViewer sv = DO as ScrollViewer;
-
-            if (sv.VerticalOffset == sv.ScrollableHeight)
-                sv.ScrollToBottom();
-        }
-
-        protected Thickness paragraphPadding = new Thickness(2.0, 0.0, 0.0, 0.0);
-        protected static SolidColorBrush LinkBrush = Brushes.LightBlue;
-        protected static SolidColorBrush TextBrush = Brushes.Black;
-        protected static Regex HyperlinkPattern = new Regex("(^|[ ]|((https?|ftp):\\/\\/))(([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|net|org|info|biz|gov|name|edu|[a-zA-Z][a-zA-Z]))(:[0-9]+)?((\\/|\\?)[^ \"]*[^ ,;\\.:\">)])?", RegexOptions.Compiled);
-        public void AddOutput(TimeSourceTextGroup group)
-        {
-            Paragraph p = new Paragraph();
-            p.Padding = paragraphPadding;
-            p.TextAlignment = TextAlignment.Left;
-
-            Span timeSourceSpan = new Span();
-            Run timeRun = new Run(group.Time);
-            timeRun.Foreground = ChatWindow.TimeFore;
-            p.Inlines.Add(timeRun);
-
-            ColorTextPair[] allPairs = new ColorTextPair[group.Source.Length + 1 + group.Text.Length];
-            for (int ii = 0; ii < group.Source.Length; ii++) allPairs[ii] = group.Source[ii];
-            allPairs[group.Source.Length] = new ColorTextPair(TextBrush, " ");
-            for (int ii = 0; ii < group.Text.Length; ii++) allPairs[ii + group.Source.Length + 1] = group.Text[ii];
-
-            ChatWindow.AddInlines(p.Inlines, allPairs, true);
-
-            double indent = new FormattedText(timeRun.Text + ChatWindow.PairsToPlainText(group.Source) + "W",
-                System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                new Typeface(chatFlowDoc.FontFamily, chatFlowDoc.FontStyle, chatFlowDoc.FontWeight, chatFlowDoc.FontStretch),
-                12.0, Brushes.Black).Width;
-            p.Margin = new Thickness(indent, 0.0, 0.0, 0.0);
-            p.TextIndent = indent * -1;
-
-            chatFlowDoc.Blocks.Add(p);
-        }
-
         internal void SetChatBackground(SolidColorBrush _chatBack)
         {
             chatFlowDoc.Background = _chatBack;
@@ -306,6 +213,15 @@ namespace ZChat
         internal void ChangeClickRestoreType(ClickRestoreType value)
         {
             RestoreType = value;
+        }
+
+        private void Window_Initialized(object sender, EventArgs e)
+        {
+            Document = chatFlowDoc;
+            DocumentScrollViewer = chatScrollViewer;
+            InputBox = inputTextBox;
+
+            UserInput += ParseUserInput;
         }
     }
 }

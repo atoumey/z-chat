@@ -169,6 +169,17 @@ namespace ZChat
             {
                 if (UserInput != null)
                     UserInput(this, InputBox.Text);
+                
+                if (!string.IsNullOrEmpty(InputBox.Text))
+                {
+                    NextHistoricalEntry = 1;
+                    if (EntryHistory.Count == 100)
+                    {
+                        EntryHistory.RemoveAt(EntryHistory.Count - 1);
+                    }
+                    EntryHistory.Insert(1, InputBox.Text);
+                }
+                
                 InputBox.Clear();
             }
             else if (e.Key == Key.Up)
@@ -191,7 +202,7 @@ namespace ZChat
             }
         }
 
-        private void Output(ColorTextPair[] sourcePairs, ColorTextPair[] textPairs)
+        public void Output(ColorTextPair[] sourcePairs, ColorTextPair[] textPairs)
         {
             if (Document == null || DocumentScrollViewer == null) return;
 
@@ -355,6 +366,37 @@ namespace ZChat
                     MessageBox.Show(ex.Message);
                 }
             })).Start(((sender as Hyperlink).Tag as string).Trim());
+        }
+    }
+
+    public struct TimeSourceTextGroup
+    {
+        public string Time;
+        public ColorTextPair[] Source;
+        public ColorTextPair[] Text;
+
+        public TimeSourceTextGroup(string time, ColorTextPair[] source, ColorTextPair[] text)
+        {
+            Time = time;
+            Source = source;
+            Text = text;
+        }
+    }
+
+    public struct ColorTextPair
+    {
+        public SolidColorBrush Color;
+        public string Text;
+
+        public ColorTextPair(SolidColorBrush color, string text)
+        {
+            Color = color;
+            Text = text;
+        }
+
+        public ColorTextPair[] Append(SolidColorBrush color, string text)
+        {
+            return new ColorTextPair[] { this, new ColorTextPair(color, text) };
         }
     }
 }
