@@ -210,15 +210,18 @@ namespace ZChat
             timeStamp = DateTime.Now.ToString(TimeStampFormat);
             TimeSourceTextGroup group = new TimeSourceTextGroup(timeStamp, sourcePairs, textPairs);
 
-            AddOutput(group);
+            Dispatcher.BeginInvoke(new VoidDelegate(delegate
+            {
+                AddOutput(group);
 
-            DependencyObject DO = VisualTreeHelper.GetChild(DocumentScrollViewer, 0);
-            while (!(DO is ScrollViewer))
-                DO = VisualTreeHelper.GetChild(DO, 0);
-            ScrollViewer sv = DO as ScrollViewer;
+                DependencyObject DO = VisualTreeHelper.GetChild(DocumentScrollViewer, 0);
+                while (!(DO is ScrollViewer))
+                    DO = VisualTreeHelper.GetChild(DO, 0);
+                ScrollViewer sv = DO as ScrollViewer;
 
-            if (sv.VerticalOffset == sv.ScrollableHeight)
-                sv.ScrollToBottom();
+                if (sv.VerticalOffset == sv.ScrollableHeight)
+                    sv.ScrollToBottom();
+            }));
         }
 
         protected Thickness paragraphPadding = new Thickness(2.0, 0.0, 0.0, 0.0);
