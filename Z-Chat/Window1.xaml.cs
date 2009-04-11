@@ -25,13 +25,7 @@ namespace ZChat
 {
     delegate void VoidDelegate();
 
-    public enum ClickRestoreType
-    {
-        SingleClick,
-        DoubleClick
-    }
-
-    public partial class ChatWindow : Window
+    public partial class ChannelWindow : ActivityWindow
     {
         public static string ISOLATED_FILE_NAME = "ChatConfig.txt";
 
@@ -39,30 +33,7 @@ namespace ZChat
         private string channel = "#test";
         private string topic;
         private string nick = System.Environment.UserName;
-
-        private EventHandler notifyClickHandler;
-        public ClickRestoreType ClickRestoreType
-        {
-            get { return _clickRestoreType; }
-            set
-            {
-                _clickRestoreType = value;
-                if (_clickRestoreType == ClickRestoreType.SingleClick)
-                {
-                    notifyIcon.DoubleClick -= notifyClickHandler;
-                    notifyIcon.Click += notifyClickHandler;
-                }
-                else if (_clickRestoreType == ClickRestoreType.DoubleClick)
-                {
-                    notifyIcon.Click -= notifyClickHandler;
-                    notifyIcon.DoubleClick += notifyClickHandler;
-                }
-
-                foreach (PrivMsg priv in queryWindows.Values)
-                    priv.ChangeClickRestoreType(value);
-            }
-        }
-        private ClickRestoreType _clickRestoreType = ClickRestoreType.SingleClick;
+        
         public bool HighlightTrayIconForJoinsAndQuits = true;
 
         public SolidColorBrush UsersBack { get { return _usersBack; } set { _usersBack = value; usersListBox.Background = value; } }
@@ -103,40 +74,18 @@ namespace ZChat
 
         private string[] commandLineArgs;
 
-        private System.Windows.Forms.NotifyIcon notifyIcon;
-        private System.Drawing.Icon trayIcon = new System.Drawing.Icon(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRC.ico"));
-        private System.Drawing.Icon trayIconGreen = new System.Drawing.Icon(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRCgreen.ico"));
-
         private IrcClient irc;
-
-        private BitmapFrame windowIcon = BitmapFrame.Create(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRC.ico"));
-        private BitmapFrame windowIconGreen = BitmapFrame.Create(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRCgreen.ico"));
 
         private Dictionary<string, PrivMsg> queryWindows = new Dictionary<string, PrivMsg>();
 
-        public ChatWindow()
+        public ChannelWindow()
         {
             InitializeComponent();
-
-            notifyIcon = new System.Windows.Forms.NotifyIcon();
-            notifyIcon.BalloonTipText = "The app has been minimized. Click the tray icon to show.";
-            notifyIcon.BalloonTipTitle = "Z-Chat";
-            notifyIcon.Text = "Z-Chat";
-            notifyIcon.Icon = trayIcon;
-
-            Icon = windowIcon;
-
-            notifyClickHandler = new EventHandler(notifyIcon_Click);
-            notifyIcon.Click += notifyClickHandler;
-
             EntryHistory.Add("");
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            notifyIcon.Dispose();
-            notifyIcon = null;
-
             if (irc.IsConnected)
                 irc.Disconnect();
 
@@ -144,45 +93,16 @@ namespace ZChat
         }
 
         private bool balloonShownAlready = false;
-        private WindowState storedWindowState = WindowState.Normal;
         private void Window_StateChanged(object sender, EventArgs e)
         {
             if (WindowState == WindowState.Minimized)
             {
-                Hide();
                 if (notifyIcon != null && !balloonShownAlready)
                 {
                     balloonShownAlready = true;
                     notifyIcon.ShowBalloonTip(5000);
                 }
             }
-            else
-                storedWindowState = WindowState;
-        }
-
-        private void Window_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            CheckTrayIcon();
-        }
-
-        private void CheckTrayIcon()
-        {
-            ShowTrayIcon(!IsVisible);
-        }
-
-        private void ShowTrayIcon(bool show)
-        {
-            if (notifyIcon != null)
-            {
-                notifyIcon.Visible = show;
-                notifyIcon.Icon = trayIcon;
-            }
-        }
-
-        void notifyIcon_Click(object sender, EventArgs e)
-        {
-            Show();
-            WindowState = storedWindowState;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -397,8 +317,8 @@ namespace ZChat
 
                         if (options.ContainsKey("ClickRestoreType"))
                         {
-                            if (options["ClickRestoreType"] == "single") ClickRestoreType = ClickRestoreType.SingleClick;
-                            else ClickRestoreType = ClickRestoreType.DoubleClick;
+                            if (options["ClickRestoreType"] == "single") RestoreType = ClickRestoreType.SingleClick;
+                            else RestoreType = ClickRestoreType.DoubleClick;
                         }
 
                         if (options.ContainsKey("HighlightTrayForJoinQuits"))
@@ -964,17 +884,6 @@ namespace ZChat
                 sv.ScrollToBottom();
         }
 
-        private void ShowActivity()
-        {
-            Dispatcher.BeginInvoke(DispatcherPriority.Normal, new VoidDelegate(delegate
-            {
-                if (WindowState == WindowState.Minimized)
-                    notifyIcon.Icon = trayIconGreen;
-                else if (!IsActive)
-                    Icon = windowIconGreen;
-            }));
-        }
-
         protected Thickness paragraphPadding = new Thickness(2.0, 0.0, 0.0, 0.0);
         protected static Regex HyperlinkPattern = new Regex("(^|[ ]|((https?|ftp):\\/\\/))(([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|net|org|info|biz|gov|name|edu|[a-zA-Z][a-zA-Z]))(:[0-9]+)?((\\/|\\?)[^ \"]*[^ ,;\\.:\">)])?", RegexOptions.Compiled);
         public void AddOutput(TimeSourceTextGroup group)
@@ -1124,11 +1033,6 @@ namespace ZChat
                     MessageBox.Show(ex.Message);
                 }
             })).Start(((sender as Hyperlink).Tag as string).Trim());
-        }
-
-        private void Window_Activated(object sender, EventArgs e)
-        {
-            Icon = windowIcon;
         }
 
         private void Window_KeyDown(object sender, KeyEventArgs e)

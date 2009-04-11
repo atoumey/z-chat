@@ -16,9 +16,9 @@ namespace ZChat
     /// </summary>
     public partial class Options : Window
     {
-        public ChatWindow ChatWindow;
+        public ChannelWindow ChatWindow;
 
-        public Options(ChatWindow parent)
+        public Options(ChannelWindow parent)
         {
             InitializeComponent();
 
@@ -28,7 +28,7 @@ namespace ZChat
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            if (ChatWindow.ClickRestoreType == ClickRestoreType.SingleClick)
+            if (ChatWindow.RestoreType == ZChat.ActivityWindow.ClickRestoreType.SingleClick)
             {
                 singleClickRestore.IsChecked = true;
                 doubleClickRestore.IsChecked = false;
@@ -70,9 +70,9 @@ namespace ZChat
         private void SaveOptions()
         {
             if (singleClickRestore.IsChecked.Value)
-                ChatWindow.ClickRestoreType = ClickRestoreType.SingleClick;
+                ChatWindow.RestoreType = ZChat.ActivityWindow.ClickRestoreType.SingleClick;
             else
-                ChatWindow.ClickRestoreType = ClickRestoreType.DoubleClick;
+                ChatWindow.RestoreType = ZChat.ActivityWindow.ClickRestoreType.DoubleClick;
 
             ChatWindow.HighlightTrayIconForJoinsAndQuits = joinsQuitsHighlight.IsChecked.Value;
 
@@ -109,11 +109,11 @@ namespace ZChat
             IsolatedStorageFile isoStore = IsolatedStorageFile.GetStore(IsolatedStorageScope.User
                 | IsolatedStorageScope.Assembly, null, null);
 
-            IsolatedStorageFileStream oStream = new IsolatedStorageFileStream(ChatWindow.ISOLATED_FILE_NAME,
+            IsolatedStorageFileStream oStream = new IsolatedStorageFileStream(ChannelWindow.ISOLATED_FILE_NAME,
                 FileMode.Create, isoStore);
 
             StreamWriter writer = new StreamWriter(oStream);
-            writer.WriteLine("ClickRestoreType:" + ((ChatWindow.ClickRestoreType == ClickRestoreType.SingleClick) ? "single" : "double"));
+            writer.WriteLine("ClickRestoreType:" + ((ChatWindow.RestoreType == ZChat.ActivityWindow.ClickRestoreType.SingleClick) ? "single" : "double"));
             writer.WriteLine("HighlightTrayForJoinQuits:" + ((ChatWindow.HighlightTrayIconForJoinsAndQuits == true) ? "yes" : "no"));
             writer.WriteLine("UsersBack:" + ChatWindow.UsersBack.Color.ToString());
             writer.WriteLine("UsersFore:" + ChatWindow.UsersFore.Color.ToString());

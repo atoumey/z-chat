@@ -118,6 +118,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActivityWindow.cs" />
     <Compile Include="Error.xaml.cs">
       <DependentUpon>Error.xaml</DependentUpon>
     </Compile>

@@ -1,6 +1,7 @@
-﻿<Window x:Class="ZChat.ChatWindow"
+﻿<z:ActivityWindow x:Class="ZChat.ChannelWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:z="clr-namespace:ZChat"
     Title="Chat" Height="300" Width="600"
     Closing="Window_Closing" StateChanged="Window_StateChanged"
     IsVisibleChanged="Window_IsVisibleChanged"
@@ -28,4 +29,4 @@
         </ScrollViewer>
         <TextBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Name="inputTextBox" KeyDown="inputTextBox_KeyDown" KeyUp="inputTextBox_KeyUp" FontSize="12"/>
     </Grid>
-</Window>
+</z:ActivityWindow>

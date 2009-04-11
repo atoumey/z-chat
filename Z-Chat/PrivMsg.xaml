@@ -1,6 +1,7 @@
-﻿<Window x:Class="ZChat.PrivMsg"
+﻿<z:ActivityWindow x:Class="ZChat.PrivMsg"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:z="clr-namespace:ZChat"
     Title="PrivMsg" Height="300" Width="500"
     Closing="Window_Closing" StateChanged="Window_StateChanged"
     IsVisibleChanged="Window_IsVisibleChanged"
@@ -16,4 +17,4 @@
         </FlowDocumentScrollViewer>
         <TextBox Grid.Row="1" Grid.Column="0" Name="inputTextBox" KeyUp="inputTextBox_KeyUp" FontSize="12"/>
     </Grid>
-</Window>
+</z:ActivityWindow>

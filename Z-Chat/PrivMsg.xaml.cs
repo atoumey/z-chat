@@ -19,41 +19,23 @@ using System.Xml.Linq;
 
 namespace ZChat
 {
-    public partial class PrivMsg : Window
+    public partial class PrivMsg : ActivityWindow
     {
-        ChatWindow ChatWindow;
+        ChannelWindow ChatWindow;
         IrcClient irc;
         string queriedUser;
 
         public int NextHistoricalEntry;
         public List<string> EntryHistory = new List<string>();
 
-        public EventHandler notifyClickHandler;
-        private System.Windows.Forms.NotifyIcon notifyIcon;
-        private System.Drawing.Icon trayIcon = new System.Drawing.Icon(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRC.ico"));
-        private System.Drawing.Icon trayIconGreen = new System.Drawing.Icon(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRCgreen.ico"));
-
-        private BitmapFrame windowIcon = BitmapFrame.Create(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRC.ico"));
-        private BitmapFrame windowIconGreen = BitmapFrame.Create(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRCgreen.ico"));
-
-        public PrivMsg(ChatWindow chatWindow, IrcClient ircClient, string queriedUserName)
+        public PrivMsg(ChannelWindow chatWindow, IrcClient ircClient, string queriedUserName)
         {
             InitializeComponent();
             ChatWindow = chatWindow;
             irc = ircClient;
             queriedUser = queriedUserName;
 
-            notifyIcon = new System.Windows.Forms.NotifyIcon();
-            notifyIcon.Text = queriedUser;
-            notifyIcon.Icon = trayIcon;
-
-            Icon = windowIcon;
-
-            notifyClickHandler = new EventHandler(notifyIcon_Click);
-            if (chatWindow.ClickRestoreType == ClickRestoreType.DoubleClick)
-                notifyIcon.DoubleClick += notifyClickHandler;
-            else
-                notifyIcon.Click += notifyClickHandler;
+            RestoreType = chatWindow.RestoreType;
 
             UpdateTitle();
             EntryHistory.Add("");
@@ -304,61 +286,7 @@ namespace ZChat
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            notifyIcon.Dispose();
-            notifyIcon = null;
             ChatWindow.PrivWindowDied(queriedUser);
-        }
-
-        private WindowState storedWindowState = WindowState.Normal;
-        private void Window_StateChanged(object sender, EventArgs e)
-        {
-            if (WindowState == WindowState.Minimized)
-            {
-                Hide();
-            }
-            else
-                storedWindowState = WindowState;
-        }
-
-        private void Window_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            CheckTrayIcon();
-        }
-
-        private void CheckTrayIcon()
-        {
-            ShowTrayIcon(!IsVisible);
-        }
-
-        private void ShowTrayIcon(bool show)
-        {
-            if (notifyIcon != null)
-            {
-                notifyIcon.Visible = show;
-                notifyIcon.Icon = trayIcon;
-            }
-        }
-
-        void notifyIcon_Click(object sender, EventArgs e)
-        {
-            Show();
-            WindowState = storedWindowState;
-        }
-
-        public void ShowActivity()
-        {
-            Dispatcher.BeginInvoke(DispatcherPriority.Normal, new VoidDelegate(delegate
-            {
-                if (WindowState == WindowState.Minimized)
-                    notifyIcon.Icon = trayIconGreen;
-                else if (!IsActive)
-                    Icon = windowIconGreen;
-            }));
-        }
-
-        private void Window_Activated(object sender, EventArgs e)
-        {
-            Icon = windowIcon;
         }
 
         internal void NickChange(string newNick)
@@ -377,16 +305,7 @@ namespace ZChat
 
         internal void ChangeClickRestoreType(ClickRestoreType value)
         {
-            if (value == ClickRestoreType.SingleClick)
-            {
-                notifyIcon.DoubleClick -= notifyClickHandler;
-                notifyIcon.Click += notifyClickHandler;
-            }
-            else if (value == ClickRestoreType.DoubleClick)
-            {
-                notifyIcon.Click -= notifyClickHandler;
-                notifyIcon.DoubleClick += notifyClickHandler;
-            }
+            RestoreType = value;
         }
     }
 }

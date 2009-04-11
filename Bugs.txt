@@ -1,1 +1,2 @@
-topic changes cause icon hilight (option?)
+option for topic changes cause icon hilight
+plugin component dlls
