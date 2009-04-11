@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Collections;
-using System.Diagnostics;
-using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.IO;
 using System.IO.IsolatedStorage;
