@@ -92,19 +92,6 @@ namespace ZChat
             App.Current.Shutdown();
         }
 
-        private bool balloonShownAlready = false;
-        private void Window_StateChanged(object sender, EventArgs e)
-        {
-            if (WindowState == WindowState.Minimized)
-            {
-                if (notifyIcon != null && !balloonShownAlready)
-                {
-                    balloonShownAlready = true;
-                    notifyIcon.ShowBalloonTip(5000);
-                }
-            }
-        }
-
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             LoadConfigurationFile();
