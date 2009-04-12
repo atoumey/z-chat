@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{4F334D3F-6FB6-4F93-98DE-803AE6F69FC0}</ProjectGuid>
     <OutputType>WinExe</OutputType>
@@ -92,6 +92,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="ConnectionWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Error.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -120,6 +124,9 @@
   <ItemGroup>
     <Compile Include="ActivityWindow.cs" />
     <Compile Include="ChatWindow.cs" />
+    <Compile Include="ConnectionWindow.xaml.cs">
+      <DependentUpon>ConnectionWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Error.xaml.cs">
       <DependentUpon>Error.xaml</DependentUpon>
     </Compile>
