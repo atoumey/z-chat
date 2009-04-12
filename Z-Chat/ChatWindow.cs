@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Media;
 using System.Threading;
 using System.Diagnostics;
+using System.ComponentModel;
 
 namespace ZChat
 {
@@ -39,12 +40,29 @@ namespace ZChat
 
         protected List<string> Users = new List<string>();
 
-        public ChatWindow()
+        public ChatWindow(App app) : base(app)
         {
+            ZChat.PropertyChanged += ZChat_PropertyChanged;
+
             EntryHistory.Add("");
 
             Loaded += ChatWindow_Loaded;
             Activated += ChatWindow_Activated;
+        }
+
+        void ZChat_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "EntryBack")
+                InputBox.Background = ZChat.EntryBack;
+            if (e.PropertyName == "EntryFore")
+                InputBox.Foreground = ZChat.EntryFore;
+            if (e.PropertyName == "ChatBack")
+                Document.Background = ZChat.ChatBack;
+            if (e.PropertyName == "Font")
+            {
+                InputBox.FontFamily = ZChat.Font;
+                Document.FontFamily = ZChat.Font;
+            }
         }
 
         void ChatWindow_Activated(object sender, EventArgs e)
@@ -54,40 +72,14 @@ namespace ZChat
 
         private void ChatWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            InputBox.Background = ZChat.EntryBack;
+            InputBox.Foreground = ZChat.EntryFore;
+            Document.Background = ZChat.ChatBack;
+            InputBox.FontFamily = ZChat.Font;
+            Document.FontFamily = ZChat.Font;
+
             InputBox.Focus();
         }
-
-        /// <summary>
-        /// The font used for the chat text and the input text.
-        /// </summary>
-        public FontFamily Font
-        {
-            get { return _font; }
-            set
-            {
-                _font = value;
-                InputBox.FontFamily = Font;
-                Document.FontFamily = Font;
-            }
-        }
-        private FontFamily _font = new FontFamily("Courier New");
-
-        public SolidColorBrush EntryBack { get { return _entryBack; } set { _entryBack = value; InputBox.Background = value; } }
-        private SolidColorBrush _entryBack = Brushes.White;
-        public SolidColorBrush EntryFore { get { return _entryFore; } set { _entryFore = value; InputBox.Foreground = value; } }
-        private SolidColorBrush _entryFore = Brushes.Black;
-        public SolidColorBrush ChatBack { get { return _chatBack; } set { _chatBack = value; Document.Background = value; } }
-        private SolidColorBrush _chatBack = Brushes.White;
-        public SolidColorBrush TimeFore = Brushes.Black;
-        public SolidColorBrush NickFore = Brushes.Black;
-        public SolidColorBrush BracketFore = Brushes.Black;
-        public SolidColorBrush TextFore { get { return _textFore; } set { _textFore = value; } }
-        private SolidColorBrush _textFore = Brushes.Black;
-        public SolidColorBrush QueryTextFore = Brushes.Maroon;
-        public SolidColorBrush OwnNickFore = Brushes.Green;
-        public SolidColorBrush LinkFore = Brushes.Black;
-
-        public string TimeStampFormat = "HH:mm:ss ";
 
         public int NextHistoricalEntry;
         public List<string> EntryHistory = new List<string>();
@@ -207,7 +199,7 @@ namespace ZChat
             if (Document == null || DocumentScrollViewer == null) return;
 
             string timeStamp;
-            timeStamp = DateTime.Now.ToString(TimeStampFormat);
+            timeStamp = DateTime.Now.ToString(ZChat.TimeStampFormat);
             TimeSourceTextGroup group = new TimeSourceTextGroup(timeStamp, sourcePairs, textPairs);
 
             Dispatcher.BeginInvoke(new VoidDelegate(delegate
@@ -234,12 +226,12 @@ namespace ZChat
 
             Span timeSourceSpan = new Span();
             Run timeRun = new Run(group.Time);
-            timeRun.Foreground = TimeFore;
+            timeRun.Foreground = ZChat.TimeFore;
             p.Inlines.Add(timeRun);
 
             ColorTextPair[] allPairs = new ColorTextPair[group.Source.Length + 1 + group.Text.Length];
             for (int ii = 0; ii < group.Source.Length; ii++) allPairs[ii] = group.Source[ii];
-            allPairs[group.Source.Length] = new ColorTextPair(TextFore, " ");
+            allPairs[group.Source.Length] = new ColorTextPair(ZChat.TextFore, " ");
             for (int ii = 0; ii < group.Text.Length; ii++) allPairs[ii + group.Source.Length + 1] = group.Text[ii];
 
             AddInlines(p.Inlines, allPairs, true);
@@ -286,7 +278,7 @@ namespace ZChat
                                 linkText = pair.Text.Substring(linkStart, linkLength);
 
                                 Hyperlink link = new Hyperlink(new Run(linkText));
-                                link.Foreground = LinkFore;
+                                link.Foreground = ZChat.LinkFore;
                                 link.SetValue(KeyboardNavigation.IsTabStopProperty, false);
                                 //if (link.FontStyle) link.TextDecorations.Add(TextDecorations.Underline);
                                 link.Click += new RoutedEventHandler(link_Click);

@@ -15,48 +15,22 @@ using System.Collections.Generic;
 using System.Net;
 using System.Xml.Linq;
 using System.Linq;
+using System.ComponentModel;
 
 namespace ZChat
 {
     public partial class ChannelWindow : ChatWindow
     {
-        private App ZChat;
-
         public static string ISOLATED_FILE_NAME = "ChatConfig.txt";
 
-        private string server = "irc.mibbit.com";
-        public string Channel = "#test";
+        public string Channel;
         private string topic;
-        private string nick = System.Environment.UserName;
-        
-        public SolidColorBrush UsersBack { get { return _usersBack; } set { _usersBack = value; usersListBox.Background = value; } }
-        private SolidColorBrush _usersBack = Brushes.White;
-        public SolidColorBrush UsersFore { get { return _usersFore; } set { _usersFore = value; usersListBox.Foreground = value; } }
-        private SolidColorBrush _usersFore = Brushes.Black;
 
-        public bool HighlightTrayIconForJoinsAndQuits = true;
-
-        public new FontFamily Font
+        public ChannelWindow(App app) : base(app)
         {
-            get { return base.Font; }
-            set
-            {
-                base.Font = value;
-                usersListBox.FontFamily = base.Font;
-                topicTextBox.FontFamily = base.Font;
-            }
-        }
+            ZChat.PropertyChanged += ZChat_PropertyChanged;
 
-        public bool WindowsForPrivMsgs = false;
-        public string LastFMUserName = "";
-
-
-        private Dictionary<string, PrivMsg> queryWindows = new Dictionary<string, PrivMsg>();
-
-        public ChannelWindow(App app)
-        {
             InitializeComponent();
-            ZChat = app;
 
             ZChat.IRC.OnPart += new PartEventHandler(irc_OnPart);
             ZChat.IRC.OnQuit += new QuitEventHandler(irc_OnQuit);
@@ -71,26 +45,45 @@ namespace ZChat
             ZChat.IRC.OnKick += new KickEventHandler(irc_OnKick);
             ZChat.IRC.OnNickChange += new NickChangeEventHandler(irc_OnNickChange);
             ZChat.IRC.OnChannelAction += new ActionEventHandler(irc_OnChannelAction);
-            ZChat.IRC.OnQueryMessage += new IrcEventHandler(irc_OnQueryMessage);
-            ZChat.IRC.OnQueryAction += new ActionEventHandler(irc_OnQueryAction);
-            ZChat.IRC.OnQueryNotice += new IrcEventHandler(irc_OnQueryNotice);
             ZChat.IRC.OnTopic += new TopicEventHandler(irc_OnTopic);
             ZChat.IRC.OnTopicChange += new TopicChangeEventHandler(irc_OnTopicChange);
 
+            if (ZChat.IRC.IsConnected)
+                ZChat.IRC.RfcJoin(Channel);
+        }
+
+        void ZChat_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "UsersBack")
+                usersListBox.Background = ZChat.UsersBack;
+            if (e.PropertyName == "UsersFore")
+                usersListBox.Foreground = ZChat.UsersFore;
+            if (e.PropertyName == "Font")
+            {
+                usersListBox.FontFamily = ZChat.Font;
+                topicTextBox.Document.FontFamily = ZChat.Font;
+            }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             LoadConfigurationFile();
-            
-            usersListBox.FontFamily = Font;
-            topicTextBox.Document.FontFamily = Font;
+
+            usersListBox.Background = ZChat.UsersBack;
+            usersListBox.Foreground = ZChat.UsersFore;
+            usersListBox.FontFamily = ZChat.Font;
+            topicTextBox.Document.FontFamily = ZChat.Font;
+
+            usersListBox.FontFamily = ZChat.Font;
+            topicTextBox.Document.FontFamily = ZChat.Font;
         }
 
         void irc_OnTopicChange(object sender, TopicChangeEventArgs e)
         {
-            Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, e.Who + " changed the topic to: " + e.NewTopic) });
+            if (e.Channel != Channel) return;
+
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " changed the topic to: " + e.NewTopic) });
 
             UpdateTopic(e.NewTopic);
         }
@@ -104,7 +97,7 @@ namespace ZChat
                 Paragraph p = new Paragraph();
                 p.TextAlignment = TextAlignment.Left;
 
-                AddInlines(p.Inlines, new ColorTextPair[] { new ColorTextPair(TextFore, newTopic) }, true);
+                AddInlines(p.Inlines, new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, newTopic) }, true);
 
                 topicTextBox.Document.Blocks.Clear();
                 topicTextBox.Document.Blocks.Add(p);
@@ -113,6 +106,8 @@ namespace ZChat
 
         void irc_OnTopic(object sender, TopicEventArgs e)
         {
+            if (e.Channel != Channel) return;
+
             UpdateTopic(e.Topic);
         }
 
@@ -124,11 +119,11 @@ namespace ZChat
             if (e.Data.Nick == null)
                 source = new ColorTextPair[] {};
             else
-                source = new ColorTextPair[] { new ColorTextPair(QueryTextFore, "*"),
-                                         new ColorTextPair(QueryTextFore, e.Data.Nick),
-                                         new ColorTextPair(QueryTextFore, "*") };
+                source = new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, "*"),
+                                         new ColorTextPair(ZChat.QueryTextFore, e.Data.Nick),
+                                         new ColorTextPair(ZChat.QueryTextFore, "*") };
 
-            Output(source, new ColorTextPair[] { new ColorTextPair(QueryTextFore, e.Data.Message) });
+            Output(source, new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, e.Data.Message) });
 
             lastQuerySender = e.Data.Nick;
             ShowActivity();
@@ -136,78 +131,23 @@ namespace ZChat
 
         void irc_OnQueryAction(object sender, ActionEventArgs e)
         {
-            if (WindowsForPrivMsgs && queryWindows.Count <= 10)
-            {
-                PrivMsg queryWindow = null;
-                foreach (KeyValuePair<string, PrivMsg> pair in queryWindows)
-                    if (pair.Key == e.Data.Nick)
-                        queryWindow = pair.Value;
-
-                if (queryWindow == null)
-                {
-                    Dispatcher.Invoke(DispatcherPriority.Normal, new VoidDelegate(delegate
-                    {
-                        queryWindow = new PrivMsg(this, ZChat.IRC, e.Data.Nick);
-                        queryWindow.Show();
-                    }));
-                    queryWindows.Add(e.Data.Nick, queryWindow);
-                }
-
-                queryWindow.Output(new ColorTextPair[] { new ColorTextPair(BracketFore, "* "),
-                                                         new ColorTextPair(TextFore, e.Data.Nick) },
-                                   new ColorTextPair[] { new ColorTextPair(TextFore, e.ActionMessage.Substring(1)) });
-
-                queryWindow.ShowActivity();
-            }
-            else
-            {
-                Output(new ColorTextPair[] { new ColorTextPair(QueryTextFore, "* "),
-                                             new ColorTextPair(QueryTextFore, e.Data.Nick) },
-                       new ColorTextPair[] { new ColorTextPair(QueryTextFore, e.ActionMessage.Substring(1)) });
-
-                ShowActivity();
-            }
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, "* "),
+                                         new ColorTextPair(ZChat.QueryTextFore, e.Data.Nick) },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, e.ActionMessage.Substring(1)) });
 
             lastQuerySender = e.Data.Nick;
+            ShowActivity();
         }
 
         void irc_OnQueryMessage(object sender, IrcEventArgs e)
         {
-            if (WindowsForPrivMsgs && queryWindows.Count <= 10)
-            {
-                PrivMsg queryWindow = null;
-                foreach (KeyValuePair<string, PrivMsg> pair in queryWindows)
-                    if (pair.Key == e.Data.Nick)
-                        queryWindow = pair.Value;
-
-                if (queryWindow == null)
-                {
-                    Dispatcher.Invoke(DispatcherPriority.Normal, new VoidDelegate(delegate
-                    {
-                        queryWindow = new PrivMsg(this, ZChat.IRC, e.Data.Nick);
-                        queryWindow.Show();
-                    }));
-                    queryWindows.Add(e.Data.Nick, queryWindow);
-                }
-
-                queryWindow.Output(new ColorTextPair[] { new ColorTextPair(BracketFore, "<"),
-                                                         new ColorTextPair(NickFore, e.Data.Nick),
-                                                         new ColorTextPair(BracketFore, ">") },
-                                   new ColorTextPair[] { new ColorTextPair(TextFore, e.Data.Message) });
-
-                queryWindow.ShowActivity();
-            }
-            else
-            {
-                Output(new ColorTextPair[] { new ColorTextPair(QueryTextFore, "*"),
-                                         new ColorTextPair(QueryTextFore, e.Data.Nick),
-                                         new ColorTextPair(QueryTextFore, "*") },
-                       new ColorTextPair[] { new ColorTextPair(QueryTextFore, e.Data.Message) });
-
-                ShowActivity();
-            }
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, "*"),
+                                     new ColorTextPair(ZChat.QueryTextFore, e.Data.Nick),
+                                     new ColorTextPair(ZChat.QueryTextFore, "*") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, e.Data.Message) });
 
             lastQuerySender = e.Data.Nick;
+            ShowActivity();
         }
 
         private void LoadConfigurationFile()
@@ -239,45 +179,45 @@ namespace ZChat
 
                         if (options.ContainsKey("ClickRestoreType"))
                         {
-                            if (options["ClickRestoreType"] == "single") RestoreType = ClickRestoreType.SingleClick;
-                            else RestoreType = ClickRestoreType.DoubleClick;
+                            if (options["ClickRestoreType"] == "single") ZChat.RestoreType = ClickRestoreType.SingleClick;
+                            else ZChat.RestoreType = ClickRestoreType.DoubleClick;
                         }
 
                         if (options.ContainsKey("HighlightTrayForJoinQuits"))
                         {
-                            if (options["HighlightTrayForJoinQuits"] == "yes") HighlightTrayIconForJoinsAndQuits = true;
-                            else HighlightTrayIconForJoinsAndQuits = false;
+                            if (options["HighlightTrayForJoinQuits"] == "yes") ZChat.HighlightTrayIconForJoinsAndQuits = true;
+                            else ZChat.HighlightTrayIconForJoinsAndQuits = false;
                         }
 
-                        if (options.ContainsKey("UsersBack")) UsersBack = App.CreateBrushFromString(options["UsersBack"]);
-                        if (options.ContainsKey("UsersFore")) UsersFore = App.CreateBrushFromString(options["UsersFore"]);
-                        if (options.ContainsKey("EntryBack")) EntryBack = App.CreateBrushFromString(options["EntryBack"]);
-                        if (options.ContainsKey("EntryFore")) EntryFore = App.CreateBrushFromString(options["EntryFore"]);
-                        if (options.ContainsKey("ChatBack")) ChatBack = App.CreateBrushFromString(options["ChatBack"]);
-                        if (options.ContainsKey("TimeFore")) TimeFore = App.CreateBrushFromString(options["TimeFore"]);
-                        if (options.ContainsKey("NickFore")) NickFore = App.CreateBrushFromString(options["NickFore"]);
-                        if (options.ContainsKey("BracketFore")) BracketFore = App.CreateBrushFromString(options["BracketFore"]);
-                        if (options.ContainsKey("TextFore")) TextFore = App.CreateBrushFromString(options["TextFore"]);
-                        if (options.ContainsKey("OwnNickFore")) OwnNickFore = App.CreateBrushFromString(options["OwnNickFore"]);
-                        if (options.ContainsKey("LinkFore")) LinkFore = App.CreateBrushFromString(options["LinkFore"]);
+                        if (options.ContainsKey("UsersBack")) ZChat.UsersBack = App.CreateBrushFromString(options["UsersBack"]);
+                        if (options.ContainsKey("UsersFore")) ZChat.UsersFore = App.CreateBrushFromString(options["UsersFore"]);
+                        if (options.ContainsKey("ZChat.EntryBack")) ZChat.EntryBack = App.CreateBrushFromString(options["ZChat.EntryBack"]);
+                        if (options.ContainsKey("ZChat.EntryFore")) ZChat.EntryFore = App.CreateBrushFromString(options["ZChat.EntryFore"]);
+                        if (options.ContainsKey("ZChat.ChatBack")) ZChat.ChatBack = App.CreateBrushFromString(options["ZChat.ChatBack"]);
+                        if (options.ContainsKey("ZChat.TimeFore")) ZChat.TimeFore = App.CreateBrushFromString(options["ZChat.TimeFore"]);
+                        if (options.ContainsKey("NickFore")) ZChat.NickFore = App.CreateBrushFromString(options["NickFore"]);
+                        if (options.ContainsKey("ZChat.BracketFore")) ZChat.BracketFore = App.CreateBrushFromString(options["ZChat.BracketFore"]);
+                        if (options.ContainsKey("TextFore")) ZChat.TextFore = App.CreateBrushFromString(options["TextFore"]);
+                        if (options.ContainsKey("ZChat.OwnNickFore")) ZChat.OwnNickFore = App.CreateBrushFromString(options["ZChat.OwnNickFore"]);
+                        if (options.ContainsKey("ZChat.LinkFore")) ZChat.LinkFore = App.CreateBrushFromString(options["ZChat.LinkFore"]);
 
                         if (options.ContainsKey("Font"))
-                            Font = new FontFamily(options["Font"]);
+                            ZChat.Font = new FontFamily(options["Font"]);
 
                         if (options.ContainsKey("TimestampFormat"))
-                            TimeStampFormat = options["TimestampFormat"];
+                            ZChat.TimeStampFormat = options["TimestampFormat"];
 
-                        if (options.ContainsKey("QueryTextFore"))
-                            QueryTextFore = App.CreateBrushFromString(options["QueryTextFore"]);
+                        if (options.ContainsKey("ZChat.QueryTextFore"))
+                            ZChat.QueryTextFore = App.CreateBrushFromString(options["ZChat.QueryTextFore"]);
 
                         if (options.ContainsKey("WindowsForPrivMsgs"))
                         {
-                            if (options["WindowsForPrivMsgs"] == "yes") WindowsForPrivMsgs = true;
-                            else WindowsForPrivMsgs = false;
+                            if (options["WindowsForPrivMsgs"] == "yes") ZChat.WindowsForPrivMsgs = true;
+                            else ZChat.WindowsForPrivMsgs = false;
                         }
 
                         if (options.ContainsKey("LastFMUserName"))
-                            LastFMUserName = options["LastFMUserName"];
+                            ZChat.LastFMUserName = options["LastFMUserName"];
 
                         isoStore.Close();
                     }
@@ -299,31 +239,21 @@ namespace ZChat
 
         void irc_OnChannelAction(object sender, ActionEventArgs e)
         {
-            Output(new ColorTextPair[] { new ColorTextPair(BracketFore, "* "),
-                                         new ColorTextPair(TextFore, e.Data.Nick) },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, e.ActionMessage.Substring(1)) });
+            if (e.Data.Channel != Channel) return;
+
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.BracketFore, "* "),
+                                         new ColorTextPair(ZChat.TextFore, e.Data.Nick) },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.ActionMessage.Substring(1)) });
 
             ShowActivity();
         }
 
         void irc_OnNickChange(object sender, NickChangeEventArgs e)
         {
-            List<string> keysToRemove = new List<string>();
-            List<KeyValuePair<string, PrivMsg>> newPrivs = new List<KeyValuePair<string, PrivMsg>>();
-            foreach (KeyValuePair<string, PrivMsg> pair in queryWindows)
-                if (pair.Key == e.OldNickname)
-                {
-                    pair.Value.NickChange(e.NewNickname);
-                    keysToRemove.Add(pair.Key);
-                    newPrivs.Add(new KeyValuePair<string,PrivMsg>(e.NewNickname, pair.Value));
-                }
-            foreach (string s in keysToRemove)
-                queryWindows.Remove(s);
-            foreach (KeyValuePair<string, PrivMsg> pair in newPrivs)
-                queryWindows.Add(pair.Key, pair.Value);
+            if (!Users.Contains(e.OldNickname)) return;
 
-            Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, e.OldNickname + " changed their name to " + e.NewNickname) });
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.OldNickname + " changed their name to " + e.NewNickname) });
 
             UpdateUsers();
             ShowActivity();
@@ -331,18 +261,20 @@ namespace ZChat
 
         void irc_OnKick(object sender, KickEventArgs e)
         {
-            Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, e.Who + " kicked " + e.Whom) });
+            if (e.Channel != Channel) return;
+
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " kicked " + e.Whom) });
 
             UpdateUsers();
-            if (HighlightTrayIconForJoinsAndQuits)
+            if (ZChat.HighlightTrayIconForJoinsAndQuits)
                 ShowActivity();
         }
 
         void irc_OnErrorMessage(object sender, IrcEventArgs e)
         {
-            Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, e.Data.Message) });
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.Message) });
 
             UpdateUsers();
         }
@@ -354,8 +286,8 @@ namespace ZChat
 
         void irc_OnDisconnected(object sender, EventArgs e)
         {
-            Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, "you disconnected") });
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "you disconnected") });
 
             UpdateUsers();
             ShowActivity();
@@ -368,43 +300,36 @@ namespace ZChat
 
         void irc_OnPart(object sender, PartEventArgs e)
         {
-            Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, e.Who + " left the chat (" + e.PartMessage + ")") });
+            if (e.Channel != Channel) return;
+
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " left the chat (" + e.PartMessage + ")") });
 
             UpdateUsers();
-            if (HighlightTrayIconForJoinsAndQuits)
+            if (ZChat.HighlightTrayIconForJoinsAndQuits)
                 ShowActivity();
         }
 
         void irc_OnQuit(object sender, QuitEventArgs e)
         {
-            Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, e.Who + " left the chat (" + e.QuitMessage + ")") });
+            if (!Users.Contains(e.Who)) return;
 
-            PrivMsg win = null;
-            foreach (KeyValuePair<string, PrivMsg> privWin in queryWindows)
-                if (privWin.Key == e.Who)
-                    win = privWin.Value;
-
-            if (win != null)
-            {
-                win.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                           new ColorTextPair[] { new ColorTextPair(TextFore, e.Who + " left the chat (" + e.QuitMessage + ")") });
-                if (HighlightTrayIconForJoinsAndQuits)
-                    win.ShowActivity();
-            }
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " quit (" + e.QuitMessage + ")") });
 
             UpdateUsers();
-            if (HighlightTrayIconForJoinsAndQuits)
+            if (ZChat.HighlightTrayIconForJoinsAndQuits)
                 ShowActivity();
         }
 
         void irc_OnChannelMessage(object sender, IrcEventArgs e)
         {
-            Output(new ColorTextPair[] { new ColorTextPair(BracketFore, "<"),
-                                         new ColorTextPair(NickFore, e.Data.Nick),
-                                         new ColorTextPair(BracketFore, ">") },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, e.Data.Message) });
+            if (e.Data.Channel != Channel) return;
+
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.BracketFore, "<"),
+                                         new ColorTextPair(ZChat.NickFore, e.Data.Nick),
+                                         new ColorTextPair(ZChat.BracketFore, ">") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.Message) });
 
             ShowActivity();
         }
@@ -422,29 +347,26 @@ namespace ZChat
         void UpdateUsers()
         {
             Channel chan = ZChat.IRC.GetChannel(Channel);
-            IEnumerable userList;
-            if (chan == null)
-                userList = new ArrayList();
-            else
-                userList = chan.Users.Keys;
+            
+            Users.Clear();
+            if (chan != null)
+                foreach (string user in chan.Users.Keys) Users.Add(user);
 
             Dispatcher.BeginInvoke(DispatcherPriority.Normal, new VoidDelegate(delegate
             {
-                usersListBox.ItemsSource = userList;
-                Users.Clear();
-                foreach (string user in userList) Users.Add(user);
+                usersListBox.ItemsSource = Users;
             }));
         }
 
         void irc_OnJoin(object sender, JoinEventArgs e)
         {
-            nick = ZChat.IRC.Nickname;
+            if (e.Channel != Channel) return;
 
-            Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(TextFore, e.Who + " joined the chat") });
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " joined the chat") });
 
             UpdateUsers();
-            if (HighlightTrayIconForJoinsAndQuits)
+            if (ZChat.HighlightTrayIconForJoinsAndQuits)
                 ShowActivity();
         }
 
@@ -471,9 +393,7 @@ namespace ZChat
                     chatFlowDoc.Blocks.Clear();
                 else if (input.Equals("/options", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    Options optionsDialog = new Options(this);
-                    optionsDialog.Owner = this;
-                    optionsDialog.ShowDialog();
+                    ZChat.ShowOptions();
                 }
                 else if (words[0].Equals("/me", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -484,33 +404,33 @@ namespace ZChat
                         action = "";
                     ZChat.IRC.SendMessage(SendType.Action, Channel, action);
 
-                    Output(new ColorTextPair[] { new ColorTextPair(TextFore, "* "),
-                                                 new ColorTextPair(TextFore, ZChat.IRC.Nickname) },
-                           new ColorTextPair[] { new ColorTextPair(TextFore, action) });
+                    Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "* "),
+                                                 new ColorTextPair(ZChat.TextFore, ZChat.IRC.Nickname) },
+                           new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, action) });
                 }
                 else if (words[0].Equals("/nick", StringComparison.CurrentCultureIgnoreCase))
                 {
                     if (words.Length == 2)
                         ZChat.IRC.RfcNick(words[1]);
                     else
-                        Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                               new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/me <newName>'.  Names may not contain spaces.") });
+                        Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
+                               new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "command syntax is '/me <newName>'.  Names may not contain spaces.") });
                 }
                 else if (words[0].Equals("/topic", StringComparison.CurrentCultureIgnoreCase))
                 {
                     if (input.Length >= 8)
                         ZChat.IRC.RfcTopic(Channel, input.Substring(7));
                     else
-                        Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                               new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/topic <new topic>'.") });
+                        Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
+                               new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "command syntax is '/topic <new topic>'.") });
                 }
                 else if (words[0].Equals("/raw", StringComparison.CurrentCultureIgnoreCase))
                 {
                     if (input.Length >= 6)
                         ZChat.IRC.WriteLine(input.Substring(5));
                     else
-                        Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                               new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/raw <raw IRC message>'.") });
+                        Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
+                               new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "command syntax is '/raw <raw IRC message>'.") });
                 }
                 else if (words[0].Equals("/msg", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -521,17 +441,15 @@ namespace ZChat
                         if (words.Length >= 3)
                         {
                             string msgText = input.Substring(input.IndexOf(" " + words[1] + " ") + words[1].Length + 2);
-                            ZChat.IRC.RfcPrivmsg(target, msgText);
-                            Output(new ColorTextPair[] { new ColorTextPair(QueryTextFore, "->*" + target + "*") },
-                                   new ColorTextPair[] { new ColorTextPair(QueryTextFore, msgText) });
+                            ZChat.SendQueryMessage(target, msgText);
                         }
                         else syntaxError = true;
                     }
                     else syntaxError = true;
 
                     if (syntaxError)
-                        Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                               new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/msg <name> <message>'.") });
+                        Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
+                               new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "command syntax is '/msg <name> <message>'.") });
                 }
                 else if (words[0].Equals("/error", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -545,29 +463,29 @@ namespace ZChat
                 }
                 else if (words[0].Equals("/np", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    if (string.IsNullOrEmpty(LastFMUserName))
-                        Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                               new ColorTextPair[] { new ColorTextPair(TextFore, "You must choose a Last.fm username on the options dialog.") });
+                    if (string.IsNullOrEmpty(ZChat.LastFMUserName))
+                        Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                               new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "You must choose a Last.fm username on the options dialog.") });
                     else
                     {
                         WebClient client = new WebClient() { Encoding = Encoding.UTF8 };
                         client.DownloadStringCompleted += new DownloadStringCompletedEventHandler(LastFMdownloadComplete);
-                        client.DownloadStringAsync(new Uri("http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + LastFMUserName + "&api_key=638e9e076d239d8202be0387769d1da9&limit=1"));
+                        client.DownloadStringAsync(new Uri("http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + ZChat.LastFMUserName + "&api_key=638e9e076d239d8202be0387769d1da9&limit=1"));
                     }
                 }
                 else if (input.StartsWith("/"))
                 {
-                    Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                           new ColorTextPair[] { new ColorTextPair(TextFore, "command not recognized.") });
+                    Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
+                           new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "command not recognized.") });
                 }
                 else if (!string.IsNullOrEmpty(input))
                 {
                     ZChat.IRC.SendMessage(SendType.Message, Channel, inputTextBox.Text);
 
-                    Output(new ColorTextPair[] { new ColorTextPair(BracketFore, "<"),
-                                                 new ColorTextPair(OwnNickFore, ZChat.IRC.Nickname),
-                                                 new ColorTextPair(BracketFore, ">") },
-                           new ColorTextPair[] { new ColorTextPair(TextFore, inputTextBox.Text) });
+                    Output(new ColorTextPair[] { new ColorTextPair(ZChat.BracketFore, "<"),
+                                                 new ColorTextPair(ZChat.OwnNickFore, ZChat.IRC.Nickname),
+                                                 new ColorTextPair(ZChat.BracketFore, ">") },
+                           new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, inputTextBox.Text) });
                 }
             }
             catch (Exception ex)
@@ -589,25 +507,25 @@ namespace ZChat
                 {
                     if (DateTime.Now.Subtract(track.date).Minutes > 30)
                     {
-                        Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                               new ColorTextPair[] { new ColorTextPair(TextFore, "You haven't submitted a song to Last.fm in the last 30 minutes.  Maybe Last.fm submission service is down?") });
+                        Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                               new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "You haven't submitted a song to Last.fm in the last 30 minutes.  Maybe Last.fm submission service is down?") });
                     }
                     else
                     {
                         string action = "is listening to " + track.name + " by " + track.artist;
                         ZChat.IRC.SendMessage(SendType.Action, Channel, action);
 
-                        Output(new ColorTextPair[] { new ColorTextPair(TextFore, "* "),
-                                                 new ColorTextPair(TextFore, ZChat.IRC.Nickname) },
-                               new ColorTextPair[] { new ColorTextPair(TextFore, action) });
+                        Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "* "),
+                                                 new ColorTextPair(ZChat.TextFore, ZChat.IRC.Nickname) },
+                               new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, action) });
                     }
                     break;
                 }
             }
             catch (Exception ex)
             {
-                Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                       new ColorTextPair[] { new ColorTextPair(TextFore, ex.Message) });
+                Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                       new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, ex.Message) });
             }
         }
 
@@ -622,12 +540,6 @@ namespace ZChat
             }
         }
 
-        public void PrivWindowDied(string queriedUser)
-        {
-            if (queryWindows.ContainsKey(queriedUser))
-                queryWindows.Remove(queriedUser);
-        }
-
         private void Window_Initialized(object sender, EventArgs e)
         {
             Document = chatFlowDoc;
@@ -635,6 +547,24 @@ namespace ZChat
             InputBox = inputTextBox;
 
             UserInput += ParseUserInput;
+        }
+
+        public void TakeIncomingQueryMessage(IrcEventArgs e)
+        {
+            if (e.Data.Type == ReceiveType.QueryNotice)
+                irc_OnQueryNotice(this, e);
+            else if (e.Data.Type == ReceiveType.QueryMessage)
+                irc_OnQueryMessage(this, e);
+            else if (e.Data.Type == ReceiveType.QueryAction)
+                irc_OnQueryAction(this, (ActionEventArgs)e);
+        }
+
+        public void TakeOutgoingQueryMessage(string nick, string message)
+        {
+            ZChat.IRC.SendMessage(SendType.Message, nick, message);
+
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, "->*" + nick + "*") },
+                                   new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, message) });
         }
     }
 }

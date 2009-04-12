@@ -5,6 +5,7 @@ using System.Text;
 using System.Windows;
 using System.Reflection;
 using System.Windows.Media.Imaging;
+using System.ComponentModel;
 
 namespace ZChat
 {
@@ -14,6 +15,8 @@ namespace ZChat
     /// </summary>
     public class ActivityWindow : Window
     {
+        protected App ZChat;
+
         /// <summary>
         /// Change the state of the window to either show activity or show no activity.
         /// </summary>
@@ -84,9 +87,13 @@ namespace ZChat
             }
         }
 
-        public ActivityWindow()
+        public ActivityWindow(App app)
         {
+            ZChat = app;
+            ZChat.PropertyChanged += ZChat_PropertyChanged;
+
             notifyIcon = new System.Windows.Forms.NotifyIcon();
+            SetRestoreType();
 
             notifyClickHandler = new EventHandler(notifyIcon_Click);
             notifyIcon.Click += notifyClickHandler;
@@ -97,8 +104,32 @@ namespace ZChat
             Closed += Window_Closed;
         }
 
+        private void SetRestoreType()
+        {
+            if (ZChat.RestoreType == ClickRestoreType.SingleClick)
+            {
+                notifyIcon.DoubleClick -= notifyClickHandler;
+                notifyIcon.Click += notifyClickHandler;
+            }
+            else if (ZChat.RestoreType == ClickRestoreType.DoubleClick)
+            {
+                notifyIcon.Click -= notifyClickHandler;
+                notifyIcon.DoubleClick += notifyClickHandler;
+            }
+        }
+
+        void ZChat_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "RestoreType")
+            {
+                SetRestoreType();
+            }
+        }
+
         private void Window_Closed(object sender, EventArgs e)
         {
+            ZChat.PropertyChanged -= ZChat_PropertyChanged;
+
             notifyIcon.Dispose();
             notifyIcon = null;
         }
@@ -112,26 +143,6 @@ namespace ZChat
 
         private EventHandler notifyClickHandler;
 
-        public ClickRestoreType RestoreType
-        {
-            get { return _restoreType; }
-            set
-            {
-                _restoreType = value;
-                if (_restoreType == ClickRestoreType.SingleClick)
-                {
-                    notifyIcon.DoubleClick -= notifyClickHandler;
-                    notifyIcon.Click += notifyClickHandler;
-                }
-                else if (_restoreType == ClickRestoreType.DoubleClick)
-                {
-                    notifyIcon.Click -= notifyClickHandler;
-                    notifyIcon.DoubleClick += notifyClickHandler;
-                }
-            }
-        }
-        private ClickRestoreType _restoreType = ClickRestoreType.SingleClick;
-        
         private bool balloonShownAlready = false;
         private WindowState storedWindowState = WindowState.Normal;
         private void Window_StateChanged(object sender, EventArgs e)
@@ -168,11 +179,11 @@ namespace ZChat
             Show();
             WindowState = storedWindowState;
         }
+    }
 
-        public enum ClickRestoreType
-        {
-            SingleClick,
-            DoubleClick
-        }
+    public enum ClickRestoreType
+    {
+        SingleClick,
+        DoubleClick
     }
 }

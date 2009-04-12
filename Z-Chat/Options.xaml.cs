@@ -16,9 +16,9 @@ namespace ZChat
     /// </summary>
     public partial class Options : Window
     {
-        public ChannelWindow ChatWindow;
+        public App ChatWindow;
 
-        public Options(ChannelWindow parent)
+        public Options(App parent)
         {
             InitializeComponent();
 
@@ -28,7 +28,7 @@ namespace ZChat
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            if (ChatWindow.RestoreType == ZChat.ActivityWindow.ClickRestoreType.SingleClick)
+            if (ChatWindow.RestoreType == ClickRestoreType.SingleClick)
             {
                 singleClickRestore.IsChecked = true;
                 doubleClickRestore.IsChecked = false;
@@ -70,9 +70,9 @@ namespace ZChat
         private void SaveOptions()
         {
             if (singleClickRestore.IsChecked.Value)
-                ChatWindow.RestoreType = ZChat.ActivityWindow.ClickRestoreType.SingleClick;
+                ChatWindow.RestoreType = ClickRestoreType.SingleClick;
             else
-                ChatWindow.RestoreType = ZChat.ActivityWindow.ClickRestoreType.DoubleClick;
+                ChatWindow.RestoreType = ClickRestoreType.DoubleClick;
 
             ChatWindow.HighlightTrayIconForJoinsAndQuits = joinsQuitsHighlight.IsChecked.Value;
 
@@ -113,7 +113,7 @@ namespace ZChat
                 FileMode.Create, isoStore);
 
             StreamWriter writer = new StreamWriter(oStream);
-            writer.WriteLine("ClickRestoreType:" + ((ChatWindow.RestoreType == ZChat.ActivityWindow.ClickRestoreType.SingleClick) ? "single" : "double"));
+            writer.WriteLine("ClickRestoreType:" + ((ChatWindow.RestoreType == ClickRestoreType.SingleClick) ? "single" : "double"));
             writer.WriteLine("HighlightTrayForJoinQuits:" + ((ChatWindow.HighlightTrayIconForJoinsAndQuits == true) ? "yes" : "no"));
             writer.WriteLine("UsersBack:" + ChatWindow.UsersBack.Color.ToString());
             writer.WriteLine("UsersFore:" + ChatWindow.UsersFore.Color.ToString());

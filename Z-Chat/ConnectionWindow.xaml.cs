@@ -31,6 +31,8 @@ namespace ZChat
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             nickNameBox.Text = Environment.UserName;
+            channelBox.Focus();
+            channelBox.SelectAll();
         }
 
         private void Connect_Click(object sender, RoutedEventArgs e)
