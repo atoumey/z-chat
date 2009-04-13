@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Threading;
 using System.Diagnostics;
 using System;
+using System.Text;
 
 namespace ZChat
 {
@@ -16,19 +17,19 @@ namespace ZChat
     /// </summary>
     public partial class Options : Window
     {
-        public App ChatWindow;
+        public App ZChat;
 
         public Options(App parent)
         {
             InitializeComponent();
 
             Icon = BitmapFrame.Create(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRC.ico"));
-            ChatWindow = parent;
+            ZChat = parent;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            if (ChatWindow.RestoreType == ClickRestoreType.SingleClick)
+            if (ZChat.RestoreType == ClickRestoreType.SingleClick)
             {
                 singleClickRestore.IsChecked = true;
                 doubleClickRestore.IsChecked = false;
@@ -39,27 +40,27 @@ namespace ZChat
                 doubleClickRestore.IsChecked = true;
             }
 
-            joinsQuitsHighlight.IsChecked = ChatWindow.HighlightTrayIconForJoinsAndQuits;
+            joinsQuitsHighlight.IsChecked = ZChat.HighlightTrayIconForJoinsAndQuits;
 
-            UsersBack.Background = ChatWindow.UsersBack;
-            UsersFore.Background = ChatWindow.UsersFore;
-            EntryBack.Background = ChatWindow.EntryBack;
-            EntryFore.Background = ChatWindow.EntryFore;
-            ChatBack.Background = ChatWindow.ChatBack;
-            TimeFore.Background = ChatWindow.TimeFore;
-            NickFore.Background = ChatWindow.NickFore;
-            BracketFore.Background = ChatWindow.BracketFore;
-            TextFore.Background = ChatWindow.TextFore;
-            QueryTextFore.Background = ChatWindow.QueryTextFore;
-            OwnNickFore.Background = ChatWindow.OwnNickFore;
-            LinkFore.Background = ChatWindow.LinkFore;
+            UsersBack.Background = ZChat.UsersBack;
+            UsersFore.Background = ZChat.UsersFore;
+            EntryBack.Background = ZChat.EntryBack;
+            EntryFore.Background = ZChat.EntryFore;
+            ChatBack.Background = ZChat.ChatBack;
+            TimeFore.Background = ZChat.TimeFore;
+            NickFore.Background = ZChat.NickFore;
+            BracketFore.Background = ZChat.BracketFore;
+            TextFore.Background = ZChat.TextFore;
+            QueryTextFore.Background = ZChat.QueryTextFore;
+            OwnNickFore.Background = ZChat.OwnNickFore;
+            LinkFore.Background = ZChat.LinkFore;
 
             fontsCombo.ItemsSource = Fonts.SystemFontFamilies;
-            fontsCombo.SelectedValue = ChatWindow.Font.Source;
+            fontsCombo.SelectedValue = ZChat.Font.Source;
 
-            timeFormatBox.Text = ChatWindow.TimeStampFormat;
-            windowsForPrivMsgs.IsChecked = ChatWindow.WindowsForPrivMsgs;
-            lastfmUserBox.Text = ChatWindow.LastFMUserName;
+            timeFormatBox.Text = ZChat.TimeStampFormat;
+            windowsForPrivMsgs.IsChecked = ZChat.WindowsForPrivMsgs;
+            lastfmUserBox.Text = ZChat.LastFMUserName;
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
@@ -70,30 +71,30 @@ namespace ZChat
         private void SaveOptions()
         {
             if (singleClickRestore.IsChecked.Value)
-                ChatWindow.RestoreType = ClickRestoreType.SingleClick;
+                ZChat.RestoreType = ClickRestoreType.SingleClick;
             else
-                ChatWindow.RestoreType = ClickRestoreType.DoubleClick;
+                ZChat.RestoreType = ClickRestoreType.DoubleClick;
 
-            ChatWindow.HighlightTrayIconForJoinsAndQuits = joinsQuitsHighlight.IsChecked.Value;
+            ZChat.HighlightTrayIconForJoinsAndQuits = joinsQuitsHighlight.IsChecked.Value;
 
-            ChatWindow.UsersBack = (SolidColorBrush)UsersBack.Background;
-            ChatWindow.UsersFore = (SolidColorBrush)UsersFore.Background;
-            ChatWindow.EntryBack = (SolidColorBrush)EntryBack.Background;
-            ChatWindow.EntryFore = (SolidColorBrush)EntryFore.Background;
-            ChatWindow.ChatBack = (SolidColorBrush)ChatBack.Background;
-            ChatWindow.TimeFore = (SolidColorBrush)TimeFore.Background;
-            ChatWindow.NickFore = (SolidColorBrush)NickFore.Background;
-            ChatWindow.BracketFore = (SolidColorBrush)BracketFore.Background;
-            ChatWindow.TextFore = (SolidColorBrush)TextFore.Background;
-            ChatWindow.QueryTextFore = (SolidColorBrush)QueryTextFore.Background;
-            ChatWindow.OwnNickFore = (SolidColorBrush)OwnNickFore.Background;
-            ChatWindow.LinkFore = (SolidColorBrush)LinkFore.Background;
+            ZChat.UsersBack = (SolidColorBrush)UsersBack.Background;
+            ZChat.UsersFore = (SolidColorBrush)UsersFore.Background;
+            ZChat.EntryBack = (SolidColorBrush)EntryBack.Background;
+            ZChat.EntryFore = (SolidColorBrush)EntryFore.Background;
+            ZChat.ChatBack = (SolidColorBrush)ChatBack.Background;
+            ZChat.TimeFore = (SolidColorBrush)TimeFore.Background;
+            ZChat.NickFore = (SolidColorBrush)NickFore.Background;
+            ZChat.BracketFore = (SolidColorBrush)BracketFore.Background;
+            ZChat.TextFore = (SolidColorBrush)TextFore.Background;
+            ZChat.QueryTextFore = (SolidColorBrush)QueryTextFore.Background;
+            ZChat.OwnNickFore = (SolidColorBrush)OwnNickFore.Background;
+            ZChat.LinkFore = (SolidColorBrush)LinkFore.Background;
 
-            ChatWindow.Font = (FontFamily)fontsCombo.SelectedItem;
+            ZChat.Font = (FontFamily)fontsCombo.SelectedItem;
 
-            ChatWindow.TimeStampFormat = timeFormatBox.Text;
-            ChatWindow.WindowsForPrivMsgs = windowsForPrivMsgs.IsChecked.Value;
-            ChatWindow.LastFMUserName = lastfmUserBox.Text;
+            ZChat.TimeStampFormat = timeFormatBox.Text;
+            ZChat.WindowsForPrivMsgs = windowsForPrivMsgs.IsChecked.Value;
+            ZChat.LastFMUserName = lastfmUserBox.Text;
 
             SaveConfigurationFile();
         }
@@ -106,35 +107,28 @@ namespace ZChat
 
         private void SaveConfigurationFile()
         {
-            IsolatedStorageFile isoStore = IsolatedStorageFile.GetStore(IsolatedStorageScope.User
-                | IsolatedStorageScope.Assembly, null, null);
+            StringBuilder options = new StringBuilder();
 
-            IsolatedStorageFileStream oStream = new IsolatedStorageFileStream(ChannelWindow.ISOLATED_FILE_NAME,
-                FileMode.Create, isoStore);
+            options.AppendLine("ClickRestoreType:" + ((ZChat.RestoreType == ClickRestoreType.SingleClick) ? "single" : "double"));
+            options.AppendLine("HighlightTrayForJoinQuits:" + ((ZChat.HighlightTrayIconForJoinsAndQuits == true) ? "yes" : "no"));
+            options.AppendLine("UsersBack:" + ZChat.UsersBack.Color.ToString());
+            options.AppendLine("UsersFore:" + ZChat.UsersFore.Color.ToString());
+            options.AppendLine("EntryBack:" + ZChat.EntryBack.Color.ToString());
+            options.AppendLine("EntryFore:" + ZChat.EntryFore.Color.ToString());
+            options.AppendLine("ChatBack:" + ZChat.ChatBack.Color.ToString());
+            options.AppendLine("TimeFore:" + ZChat.TimeFore.Color.ToString());
+            options.AppendLine("NickFore:" + ZChat.NickFore.Color.ToString());
+            options.AppendLine("BracketFore:" + ZChat.BracketFore.Color.ToString());
+            options.AppendLine("TextFore:" + ZChat.TextFore.Color.ToString());
+            options.AppendLine("QueryTextFore:" + ZChat.QueryTextFore.Color.ToString());
+            options.AppendLine("OwnNickFore:" + ZChat.OwnNickFore.Color.ToString());
+            options.AppendLine("LinkFore:" + ZChat.LinkFore.Color.ToString());
+            options.AppendLine("Font:" + ZChat.Font.Source);
+            options.AppendLine("TimestampFormat:" + ZChat.TimeStampFormat);
+            options.AppendLine("WindowsForPrivMsgs:" + ((ZChat.WindowsForPrivMsgs == true) ? "yes" : "no"));
+            options.AppendLine("LastFMUserName:" + ZChat.LastFMUserName);
 
-            StreamWriter writer = new StreamWriter(oStream);
-            writer.WriteLine("ClickRestoreType:" + ((ChatWindow.RestoreType == ClickRestoreType.SingleClick) ? "single" : "double"));
-            writer.WriteLine("HighlightTrayForJoinQuits:" + ((ChatWindow.HighlightTrayIconForJoinsAndQuits == true) ? "yes" : "no"));
-            writer.WriteLine("UsersBack:" + ChatWindow.UsersBack.Color.ToString());
-            writer.WriteLine("UsersFore:" + ChatWindow.UsersFore.Color.ToString());
-            writer.WriteLine("EntryBack:" + ChatWindow.EntryBack.Color.ToString());
-            writer.WriteLine("EntryFore:" + ChatWindow.EntryFore.Color.ToString());
-            writer.WriteLine("ChatBack:" + ChatWindow.ChatBack.Color.ToString());
-            writer.WriteLine("TimeFore:" + ChatWindow.TimeFore.Color.ToString());
-            writer.WriteLine("NickFore:" + ChatWindow.NickFore.Color.ToString());
-            writer.WriteLine("BracketFore:" + ChatWindow.BracketFore.Color.ToString());
-            writer.WriteLine("TextFore:" + ChatWindow.TextFore.Color.ToString());
-            writer.WriteLine("QueryTextFore:" + ChatWindow.QueryTextFore.Color.ToString());
-            writer.WriteLine("OwnNickFore:" + ChatWindow.OwnNickFore.Color.ToString());
-            writer.WriteLine("LinkFore:" + ChatWindow.LinkFore.Color.ToString());
-            writer.WriteLine("Font:" + ChatWindow.Font.Source);
-            writer.WriteLine("TimestampFormat:" + ChatWindow.TimeStampFormat);
-            writer.WriteLine("WindowsForPrivMsgs:" + ((ChatWindow.WindowsForPrivMsgs == true) ? "yes" : "no"));
-            writer.WriteLine("LastFMUserName:" + ChatWindow.LastFMUserName);
-            writer.Close();
-
-            oStream.Close();
-            isoStore.Close();
+            File.WriteAllText(App.CONFIG_FILE_NAME, options.ToString());
         }
 
         private void Color_Click(object sender, RoutedEventArgs e)

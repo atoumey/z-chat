@@ -21,13 +21,16 @@ namespace ZChat
 {
     public partial class ChannelWindow : ChatWindow
     {
-        public static string ISOLATED_FILE_NAME = "ChatConfig.txt";
-
         public string Channel;
         private string topic;
 
         public ChannelWindow(App app) : base(app)
         {
+            WindowIconName_NoActivity = "ZChat.IRC.ico";
+            WindowIconName_Activity = "ZChat.IRC.ico";
+            TrayIconName_NoActivity = "ZChat.IRCgreen.ico";
+            TrayIconName_Activity = "ZChat.IRCgreen.ico";
+
             ZChat.PropertyChanged += ZChat_PropertyChanged;
 
             InitializeComponent();
@@ -67,12 +70,8 @@ namespace ZChat
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadConfigurationFile();
-
             usersListBox.Background = ZChat.UsersBack;
             usersListBox.Foreground = ZChat.UsersFore;
-            usersListBox.FontFamily = ZChat.Font;
-            topicTextBox.Document.FontFamily = ZChat.Font;
 
             usersListBox.FontFamily = ZChat.Font;
             topicTextBox.Document.FontFamily = ZChat.Font;
@@ -148,93 +147,6 @@ namespace ZChat
 
             lastQuerySender = e.Data.Nick;
             ShowActivity();
-        }
-
-        private void LoadConfigurationFile()
-        {
-            try
-            {
-                IsolatedStorageFile isoStore = IsolatedStorageFile.GetStore(IsolatedStorageScope.User
-                    | IsolatedStorageScope.Assembly, null, null);
-
-                string[] fileNames = isoStore.GetFileNames(ISOLATED_FILE_NAME);
-
-                foreach (string file in fileNames)
-                    if (file == ISOLATED_FILE_NAME)
-                    {
-                        IsolatedStorageFileStream iStream = new IsolatedStorageFileStream(ISOLATED_FILE_NAME,
-                            FileMode.Open, isoStore);
-
-                        StreamReader reader = new StreamReader(iStream);
-                        String line;
-                        Dictionary<string, string> options = new Dictionary<string, string>();
-                        while ((line = reader.ReadLine()) != null)
-                        {
-                            int colonPlace = line.IndexOf(':');
-                            string optionName = line.Substring(0, colonPlace);
-                            options.Add(optionName, line.Substring(colonPlace + 1, line.Length - colonPlace - 1));
-                        }
-
-                        reader.Close();
-
-                        if (options.ContainsKey("ClickRestoreType"))
-                        {
-                            if (options["ClickRestoreType"] == "single") ZChat.RestoreType = ClickRestoreType.SingleClick;
-                            else ZChat.RestoreType = ClickRestoreType.DoubleClick;
-                        }
-
-                        if (options.ContainsKey("HighlightTrayForJoinQuits"))
-                        {
-                            if (options["HighlightTrayForJoinQuits"] == "yes") ZChat.HighlightTrayIconForJoinsAndQuits = true;
-                            else ZChat.HighlightTrayIconForJoinsAndQuits = false;
-                        }
-
-                        if (options.ContainsKey("UsersBack")) ZChat.UsersBack = App.CreateBrushFromString(options["UsersBack"]);
-                        if (options.ContainsKey("UsersFore")) ZChat.UsersFore = App.CreateBrushFromString(options["UsersFore"]);
-                        if (options.ContainsKey("ZChat.EntryBack")) ZChat.EntryBack = App.CreateBrushFromString(options["ZChat.EntryBack"]);
-                        if (options.ContainsKey("ZChat.EntryFore")) ZChat.EntryFore = App.CreateBrushFromString(options["ZChat.EntryFore"]);
-                        if (options.ContainsKey("ZChat.ChatBack")) ZChat.ChatBack = App.CreateBrushFromString(options["ZChat.ChatBack"]);
-                        if (options.ContainsKey("ZChat.TimeFore")) ZChat.TimeFore = App.CreateBrushFromString(options["ZChat.TimeFore"]);
-                        if (options.ContainsKey("NickFore")) ZChat.NickFore = App.CreateBrushFromString(options["NickFore"]);
-                        if (options.ContainsKey("ZChat.BracketFore")) ZChat.BracketFore = App.CreateBrushFromString(options["ZChat.BracketFore"]);
-                        if (options.ContainsKey("TextFore")) ZChat.TextFore = App.CreateBrushFromString(options["TextFore"]);
-                        if (options.ContainsKey("ZChat.OwnNickFore")) ZChat.OwnNickFore = App.CreateBrushFromString(options["ZChat.OwnNickFore"]);
-                        if (options.ContainsKey("ZChat.LinkFore")) ZChat.LinkFore = App.CreateBrushFromString(options["ZChat.LinkFore"]);
-
-                        if (options.ContainsKey("Font"))
-                            ZChat.Font = new FontFamily(options["Font"]);
-
-                        if (options.ContainsKey("TimestampFormat"))
-                            ZChat.TimeStampFormat = options["TimestampFormat"];
-
-                        if (options.ContainsKey("ZChat.QueryTextFore"))
-                            ZChat.QueryTextFore = App.CreateBrushFromString(options["ZChat.QueryTextFore"]);
-
-                        if (options.ContainsKey("WindowsForPrivMsgs"))
-                        {
-                            if (options["WindowsForPrivMsgs"] == "yes") ZChat.WindowsForPrivMsgs = true;
-                            else ZChat.WindowsForPrivMsgs = false;
-                        }
-
-                        if (options.ContainsKey("LastFMUserName"))
-                            ZChat.LastFMUserName = options["LastFMUserName"];
-
-                        isoStore.Close();
-                    }
-            }
-            catch (Exception ex)
-            {
-                Error.ShowError(new Exception("There was an error reading the configuration file from IsolatedStorage", ex));
-                IsolatedStorageFile isoStore = IsolatedStorageFile.GetStore(IsolatedStorageScope.User
-                    | IsolatedStorageScope.Assembly, null, null);
-                
-                string[] fileNames = isoStore.GetFileNames(ISOLATED_FILE_NAME);
-                foreach (string file in fileNames)
-                    if (file == ISOLATED_FILE_NAME)
-                        isoStore.DeleteFile(ISOLATED_FILE_NAME);
-
-                isoStore.Close();
-            }
         }
 
         void irc_OnChannelAction(object sender, ActionEventArgs e)
@@ -354,7 +266,8 @@ namespace ZChat
 
             Dispatcher.BeginInvoke(DispatcherPriority.Normal, new VoidDelegate(delegate
             {
-                usersListBox.ItemsSource = Users;
+                usersListBox.Items.Clear();
+                foreach (string user in Users) usersListBox.Items.Add(user);
             }));
         }
 

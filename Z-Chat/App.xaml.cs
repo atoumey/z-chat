@@ -7,6 +7,7 @@ using Meebey.SmartIrc4net;
 using System.Threading;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.IO.IsolatedStorage;
 
 namespace ZChat
 {
@@ -15,6 +16,8 @@ namespace ZChat
     /// </summary>
     public partial class App : Application, INotifyPropertyChanged
     {
+        public static string CONFIG_FILE_NAME = "config.txt";
+
         private string FirstChannel;
         private string Nickname;
         private string Server;
@@ -45,7 +48,7 @@ namespace ZChat
         public ClickRestoreType RestoreType { get { return _restoreType; } set { _restoreType = value; FirePropertyChanged("RestoreType"); } }
         private ClickRestoreType _restoreType = ClickRestoreType.SingleClick;
         public bool HighlightTrayIconForJoinsAndQuits = true;
-        public new FontFamily Font { get { return _font; } set { _font = value; FirePropertyChanged("Font"); } }
+        public FontFamily Font { get { return _font; } set { _font = value; FirePropertyChanged("Font"); } }
         private FontFamily _font = new FontFamily("Courier New");
         public bool WindowsForPrivMsgs = false;
         public string LastFMUserName = "";
@@ -54,6 +57,8 @@ namespace ZChat
         {
             Application.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(UnhandledException);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
+
+            LoadConfigurationFile();
 
             IRC.ActiveChannelSyncing = true;
             IRC.AutoNickHandling = true;
@@ -257,6 +262,71 @@ namespace ZChat
                 }));
             else
                 FirstWindow.TakeOutgoingQueryMessage(nick, message);
+        }
+
+        private void LoadConfigurationFile()
+        {
+            try
+            {
+                    if (File.Exists(CONFIG_FILE_NAME))
+                    {
+                        string[] configContents = File.ReadAllLines(CONFIG_FILE_NAME);
+
+                        Dictionary<string, string> options = new Dictionary<string, string>();
+                        foreach (string line in configContents)
+                        {
+                            int colonPlace = line.IndexOf(':');
+                            string optionName = line.Substring(0, colonPlace);
+                            options.Add(optionName, line.Substring(colonPlace + 1, line.Length - colonPlace - 1));
+                        }
+
+                        if (options.ContainsKey("ClickRestoreType"))
+                        {
+                            if (options["ClickRestoreType"] == "single") RestoreType = ClickRestoreType.SingleClick;
+                            else RestoreType = ClickRestoreType.DoubleClick;
+                        }
+
+                        if (options.ContainsKey("HighlightTrayForJoinQuits"))
+                        {
+                            if (options["HighlightTrayForJoinQuits"] == "yes") HighlightTrayIconForJoinsAndQuits = true;
+                            else HighlightTrayIconForJoinsAndQuits = false;
+                        }
+
+                        if (options.ContainsKey("UsersBack")) UsersBack = App.CreateBrushFromString(options["UsersBack"]);
+                        if (options.ContainsKey("UsersFore")) UsersFore = App.CreateBrushFromString(options["UsersFore"]);
+                        if (options.ContainsKey("EntryBack")) EntryBack = App.CreateBrushFromString(options["EntryBack"]);
+                        if (options.ContainsKey("EntryFore")) EntryFore = App.CreateBrushFromString(options["EntryFore"]);
+                        if (options.ContainsKey("ChatBack")) ChatBack = App.CreateBrushFromString(options["ChatBack"]);
+                        if (options.ContainsKey("TimeFore")) TimeFore = App.CreateBrushFromString(options["TimeFore"]);
+                        if (options.ContainsKey("NickFore")) NickFore = App.CreateBrushFromString(options["NickFore"]);
+                        if (options.ContainsKey("BracketFore")) BracketFore = App.CreateBrushFromString(options["BracketFore"]);
+                        if (options.ContainsKey("TextFore")) TextFore = App.CreateBrushFromString(options["TextFore"]);
+                        if (options.ContainsKey("OwnNickFore")) OwnNickFore = App.CreateBrushFromString(options["OwnNickFore"]);
+                        if (options.ContainsKey("LinkFore")) LinkFore = App.CreateBrushFromString(options["LinkFore"]);
+
+                        if (options.ContainsKey("Font"))
+                            Font = new FontFamily(options["Font"]);
+
+                        if (options.ContainsKey("TimestampFormat"))
+                            TimeStampFormat = options["TimestampFormat"];
+
+                        if (options.ContainsKey("QueryTextFore"))
+                            QueryTextFore = App.CreateBrushFromString(options["QueryTextFore"]);
+
+                        if (options.ContainsKey("WindowsForPrivMsgs"))
+                        {
+                            if (options["WindowsForPrivMsgs"] == "yes") WindowsForPrivMsgs = true;
+                            else WindowsForPrivMsgs = false;
+                        }
+
+                        if (options.ContainsKey("LastFMUserName"))
+                            LastFMUserName = options["LastFMUserName"];
+                    }
+            }
+            catch (Exception ex)
+            {
+                Error.ShowError(new Exception("There was an error reading the configuration file", ex));
+            }
         }
     }
 
