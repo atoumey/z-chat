@@ -16,7 +16,7 @@ namespace ZChat
     /// </summary>
     public partial class App : Application, INotifyPropertyChanged
     {
-        public static string CONFIG_FILE_NAME = "config.txt";
+        public static string CONFIG_FILE_NAME = "zchat_config.txt";
 
         private string FirstChannel;
         private string Nickname;
@@ -74,13 +74,11 @@ namespace ZChat
             FirstWindow.Closed += new EventHandler(Window_Closed);
             FirstWindow.Show();
 
-            if (!File.Exists("config.txt"))
+            ShowConnectionWindow(FirstWindow);
+
+            if (File.Exists("config.txt"))
             {
-                ShowConnectionWindow(FirstWindow);
-            }
-            else
-            {
-                ReadConfigFile();
+                LoadConfigurationFile();
             }
 
             FirstWindow.Channel = FirstChannel;

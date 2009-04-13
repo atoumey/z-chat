@@ -1,4 +1,3 @@
 option for topic changes cause icon hilight
 plugin component dlls
-store config.txt with executable, not in IsolatedStorage
-display help --  should show all commands at least
+display help -- should show all commands at least
