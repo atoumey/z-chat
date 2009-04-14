@@ -8,6 +8,7 @@ using System.Threading;
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.IO.IsolatedStorage;
+using System.Text;
 
 namespace ZChat
 {
@@ -16,17 +17,27 @@ namespace ZChat
     /// </summary>
     public partial class App : Application, INotifyPropertyChanged
     {
+        //If no config file is found (or the file does not contain connection info),
+        // a connection dialog will be presented.
+        //These will be the defaults for the connection dialog.
         public static string CONFIG_FILE_NAME = "zchat_config.txt";
-
-        private string FirstChannel;
-        private string Nickname;
-        private string Server;
+        public static string FIRST_CHANNEL = "#test";
+        public static string FIRST_CHANNEL_KEY;
+        public static string INITIAL_NICKNAME = Environment.UserName;
+        public static string SERVER_ADDRESS = "irc.mibbit.com";
+        public static int SERVER_PORT = 6667;
 
         ChannelWindow FirstWindow;
         public IrcClient IRC = new IrcClient();
 
         private Dictionary<string, PrivMsg> queryWindows = new Dictionary<string, PrivMsg>();
 
+        public string FirstChannel;
+        public string FirstChannelKey;
+        public string InitialNickname;
+        public string Server;
+        public int ServerPort;
+        public bool SaveConnectionInfo = true;
         public SolidColorBrush EntryBack { get { return _entryBack; } set { _entryBack = value; FirePropertyChanged("EntryBack"); } }
         private SolidColorBrush _entryBack = Brushes.White;
         public SolidColorBrush EntryFore { get { return _entryFore; } set { _entryFore = value; FirePropertyChanged("EntryFore"); } }
@@ -58,33 +69,43 @@ namespace ZChat
             Application.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(UnhandledException);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
 
-            LoadConfigurationFile();
-
-            IRC.ActiveChannelSyncing = true;
-            IRC.AutoNickHandling = true;
-            IRC.SupportNonRfc = true;
-            IRC.Encoding = System.Text.Encoding.UTF8;
-            IRC.OnConnected += new EventHandler(IRC_OnConnected);
-            IRC.OnQueryAction += new ActionEventHandler(IRC_OnQueryAction);
-            IRC.OnQueryMessage += new IrcEventHandler(IRC_OnQueryMessage);
-            IRC.OnQueryNotice += new IrcEventHandler(IRC_OnQueryNotice);
-            IRC.OnNickChange += new NickChangeEventHandler(IRC_OnNickChange);
-
             FirstWindow = new ChannelWindow(this);
             FirstWindow.Closed += new EventHandler(Window_Closed);
             FirstWindow.Show();
 
-            ShowConnectionWindow(FirstWindow);
+            LoadConfigurationFile();
 
-            if (File.Exists("config.txt"))
+            bool proceed = true;
+            if (FirstChannel == null || InitialNickname == null || Server == null)
             {
-                LoadConfigurationFile();
+                if (FirstChannel == null) FirstChannel = FIRST_CHANNEL;
+                if (FirstChannelKey == null) FirstChannelKey = FIRST_CHANNEL_KEY;
+                if (InitialNickname == null) InitialNickname = INITIAL_NICKNAME;
+                if (Server == null) Server = SERVER_ADDRESS;
+                if (ServerPort == 0) ServerPort = SERVER_PORT;
+                
+                proceed = ShowConnectionWindow(FirstWindow);
             }
 
-            FirstWindow.Channel = FirstChannel;
-            
-            if (Server != null)
-                IRC.Connect(Server, 6667);
+            if (proceed)
+            {
+                SaveConfigurationFile();
+
+                IRC.ActiveChannelSyncing = true;
+                IRC.AutoNickHandling = true;
+                IRC.SupportNonRfc = true;
+                IRC.Encoding = System.Text.Encoding.UTF8;
+                IRC.OnConnected += new EventHandler(IRC_OnConnected);
+                IRC.OnQueryAction += new ActionEventHandler(IRC_OnQueryAction);
+                IRC.OnQueryMessage += new IrcEventHandler(IRC_OnQueryMessage);
+                IRC.OnQueryNotice += new IrcEventHandler(IRC_OnQueryNotice);
+                IRC.OnNickChange += new NickChangeEventHandler(IRC_OnNickChange);
+
+                FirstWindow.Channel = FirstChannel;
+                FirstWindow.ChannelKey = FirstChannelKey;
+
+                IRC.Connect(Server, ServerPort);
+            }
         }
 
         /// <summary>
@@ -159,7 +180,7 @@ namespace ZChat
 
         void IRC_OnConnected(object sender, EventArgs e)
         {
-            IRC.Login(Nickname, "Real Name", 0, "username");
+            IRC.Login(InitialNickname, "Real Name", 0, "username");
             new Thread(new ThreadStart(delegate { IRC.Listen(); })).Start();
         }
 
@@ -179,20 +200,23 @@ namespace ZChat
             throw new NotImplementedException();
         }
 
-        private void ShowConnectionWindow(ChannelWindow FirstWindow)
+        private bool ShowConnectionWindow(ChannelWindow FirstWindow)
         {
-            ConnectionWindow connWin = new ConnectionWindow();
+            ConnectionWindow connWin = new ConnectionWindow(this);
             connWin.Owner = FirstWindow;
             if (connWin.ShowDialog().Value)
             {
                 FirstChannel = connWin.Channel;
-                Nickname = connWin.Nickname;
+                InitialNickname = connWin.Nickname;
                 Server = connWin.Server;
+                FirstChannelKey = connWin.ChannelKey;
             }
             else
             {
                 Shutdown();
             }
+
+            return connWin.DialogResult.Value;
         }
 
         void AppDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -243,7 +267,8 @@ namespace ZChat
         public void ShowOptions()
         {
             Options optionsDialog = new Options(this);
-            optionsDialog.ShowDialog();
+            if (optionsDialog.ShowDialog().Value)
+                SaveConfigurationFile();
         }
 
         public void SendQueryMessage(string nick, string message)
@@ -266,65 +291,121 @@ namespace ZChat
         {
             try
             {
-                    if (File.Exists(CONFIG_FILE_NAME))
+                if (File.Exists(CONFIG_FILE_NAME))
+                {
+                    string[] configContents = File.ReadAllLines(CONFIG_FILE_NAME);
+
+                    Dictionary<string, string> options = new Dictionary<string, string>();
+                    foreach (string line in configContents)
                     {
-                        string[] configContents = File.ReadAllLines(CONFIG_FILE_NAME);
-
-                        Dictionary<string, string> options = new Dictionary<string, string>();
-                        foreach (string line in configContents)
-                        {
-                            int colonPlace = line.IndexOf(':');
-                            string optionName = line.Substring(0, colonPlace);
-                            options.Add(optionName, line.Substring(colonPlace + 1, line.Length - colonPlace - 1));
-                        }
-
-                        if (options.ContainsKey("ClickRestoreType"))
-                        {
-                            if (options["ClickRestoreType"] == "single") RestoreType = ClickRestoreType.SingleClick;
-                            else RestoreType = ClickRestoreType.DoubleClick;
-                        }
-
-                        if (options.ContainsKey("HighlightTrayForJoinQuits"))
-                        {
-                            if (options["HighlightTrayForJoinQuits"] == "yes") HighlightTrayIconForJoinsAndQuits = true;
-                            else HighlightTrayIconForJoinsAndQuits = false;
-                        }
-
-                        if (options.ContainsKey("UsersBack")) UsersBack = App.CreateBrushFromString(options["UsersBack"]);
-                        if (options.ContainsKey("UsersFore")) UsersFore = App.CreateBrushFromString(options["UsersFore"]);
-                        if (options.ContainsKey("EntryBack")) EntryBack = App.CreateBrushFromString(options["EntryBack"]);
-                        if (options.ContainsKey("EntryFore")) EntryFore = App.CreateBrushFromString(options["EntryFore"]);
-                        if (options.ContainsKey("ChatBack")) ChatBack = App.CreateBrushFromString(options["ChatBack"]);
-                        if (options.ContainsKey("TimeFore")) TimeFore = App.CreateBrushFromString(options["TimeFore"]);
-                        if (options.ContainsKey("NickFore")) NickFore = App.CreateBrushFromString(options["NickFore"]);
-                        if (options.ContainsKey("BracketFore")) BracketFore = App.CreateBrushFromString(options["BracketFore"]);
-                        if (options.ContainsKey("TextFore")) TextFore = App.CreateBrushFromString(options["TextFore"]);
-                        if (options.ContainsKey("OwnNickFore")) OwnNickFore = App.CreateBrushFromString(options["OwnNickFore"]);
-                        if (options.ContainsKey("LinkFore")) LinkFore = App.CreateBrushFromString(options["LinkFore"]);
-
-                        if (options.ContainsKey("Font"))
-                            Font = new FontFamily(options["Font"]);
-
-                        if (options.ContainsKey("TimestampFormat"))
-                            TimeStampFormat = options["TimestampFormat"];
-
-                        if (options.ContainsKey("QueryTextFore"))
-                            QueryTextFore = App.CreateBrushFromString(options["QueryTextFore"]);
-
-                        if (options.ContainsKey("WindowsForPrivMsgs"))
-                        {
-                            if (options["WindowsForPrivMsgs"] == "yes") WindowsForPrivMsgs = true;
-                            else WindowsForPrivMsgs = false;
-                        }
-
-                        if (options.ContainsKey("LastFMUserName"))
-                            LastFMUserName = options["LastFMUserName"];
+                        int colonPlace = line.IndexOf(':');
+                        string optionName = line.Substring(0, colonPlace);
+                        options.Add(optionName, line.Substring(colonPlace + 1, line.Length - colonPlace - 1));
                     }
+
+                    if (options.ContainsKey("FirstChannel"))
+                        FirstChannel = options["FirstChannel"];
+
+                    if (options.ContainsKey("Nickname"))
+                        InitialNickname = options["Nickname"];
+                    if (options.ContainsKey("Server"))
+                        Server = options["Server"];
+                    if (options.ContainsKey("ServerPort"))
+                    {
+                        try { ServerPort = int.Parse(options["ServerPort"]); }
+                        catch { ServerPort = 6667; }
+                    }
+                    if (options.ContainsKey("FirstChannelKey"))
+                        FirstChannelKey = options["FirstChannelKey"];
+
+                    if (options.ContainsKey("SaveConnectionInfo"))
+                    {
+                        if (options["SaveConnectionInfo"] == "yes") SaveConnectionInfo = true;
+                        else SaveConnectionInfo = false;
+                    }
+
+                    if (options.ContainsKey("ClickRestoreType"))
+                    {
+                        if (options["ClickRestoreType"] == "single") RestoreType = ClickRestoreType.SingleClick;
+                        else RestoreType = ClickRestoreType.DoubleClick;
+                    }
+
+                    if (options.ContainsKey("HighlightTrayForJoinQuits"))
+                    {
+                        if (options["HighlightTrayForJoinQuits"] == "yes") HighlightTrayIconForJoinsAndQuits = true;
+                        else HighlightTrayIconForJoinsAndQuits = false;
+                    }
+
+                    if (options.ContainsKey("UsersBack")) UsersBack = App.CreateBrushFromString(options["UsersBack"]);
+                    if (options.ContainsKey("UsersFore")) UsersFore = App.CreateBrushFromString(options["UsersFore"]);
+                    if (options.ContainsKey("EntryBack")) EntryBack = App.CreateBrushFromString(options["EntryBack"]);
+                    if (options.ContainsKey("EntryFore")) EntryFore = App.CreateBrushFromString(options["EntryFore"]);
+                    if (options.ContainsKey("ChatBack")) ChatBack = App.CreateBrushFromString(options["ChatBack"]);
+                    if (options.ContainsKey("TimeFore")) TimeFore = App.CreateBrushFromString(options["TimeFore"]);
+                    if (options.ContainsKey("NickFore")) NickFore = App.CreateBrushFromString(options["NickFore"]);
+                    if (options.ContainsKey("BracketFore")) BracketFore = App.CreateBrushFromString(options["BracketFore"]);
+                    if (options.ContainsKey("TextFore")) TextFore = App.CreateBrushFromString(options["TextFore"]);
+                    if (options.ContainsKey("OwnNickFore")) OwnNickFore = App.CreateBrushFromString(options["OwnNickFore"]);
+                    if (options.ContainsKey("LinkFore")) LinkFore = App.CreateBrushFromString(options["LinkFore"]);
+
+                    if (options.ContainsKey("Font"))
+                        Font = new FontFamily(options["Font"]);
+
+                    if (options.ContainsKey("TimestampFormat"))
+                        TimeStampFormat = options["TimestampFormat"];
+
+                    if (options.ContainsKey("QueryTextFore"))
+                        QueryTextFore = App.CreateBrushFromString(options["QueryTextFore"]);
+
+                    if (options.ContainsKey("WindowsForPrivMsgs"))
+                    {
+                        if (options["WindowsForPrivMsgs"] == "yes") WindowsForPrivMsgs = true;
+                        else WindowsForPrivMsgs = false;
+                    }
+
+                    if (options.ContainsKey("LastFMUserName"))
+                        LastFMUserName = options["LastFMUserName"];
+                }
             }
             catch (Exception ex)
             {
                 Error.ShowError(new Exception("There was an error reading the configuration file", ex));
             }
+        }
+
+        private void SaveConfigurationFile()
+        {
+            StringBuilder options = new StringBuilder();
+
+            if (SaveConnectionInfo)
+            {
+                options.AppendLine("FirstChannel:" + FirstChannel);
+                options.AppendLine("Nickname:" + InitialNickname);
+                options.AppendLine("Server:" + Server);
+                options.AppendLine("ServerPort:" + ServerPort);
+                options.AppendLine("FirstChannelKey:" + FirstChannelKey);
+            }
+            options.AppendLine("SaveConnectionInfo:" + ((SaveConnectionInfo == true) ? "yes" : "no"));
+            options.AppendLine("ClickRestoreType:" + ((RestoreType == ClickRestoreType.SingleClick) ? "single" : "double"));
+            options.AppendLine("HighlightTrayForJoinQuits:" + ((HighlightTrayIconForJoinsAndQuits == true) ? "yes" : "no"));
+            options.AppendLine("UsersBack:" + UsersBack.Color.ToString());
+            options.AppendLine("UsersFore:" + UsersFore.Color.ToString());
+            options.AppendLine("EntryBack:" + EntryBack.Color.ToString());
+            options.AppendLine("EntryFore:" + EntryFore.Color.ToString());
+            options.AppendLine("ChatBack:" + ChatBack.Color.ToString());
+            options.AppendLine("TimeFore:" + TimeFore.Color.ToString());
+            options.AppendLine("NickFore:" + NickFore.Color.ToString());
+            options.AppendLine("BracketFore:" + BracketFore.Color.ToString());
+            options.AppendLine("TextFore:" + TextFore.Color.ToString());
+            options.AppendLine("QueryTextFore:" + QueryTextFore.Color.ToString());
+            options.AppendLine("OwnNickFore:" + OwnNickFore.Color.ToString());
+            options.AppendLine("LinkFore:" + LinkFore.Color.ToString());
+            options.AppendLine("Font:" + Font.Source);
+            options.AppendLine("TimestampFormat:" + TimeStampFormat);
+            options.AppendLine("WindowsForPrivMsgs:" + ((WindowsForPrivMsgs == true) ? "yes" : "no"));
+            options.AppendLine("LastFMUserName:" + LastFMUserName);
+
+            File.WriteAllText(App.CONFIG_FILE_NAME, options.ToString());
         }
     }
 

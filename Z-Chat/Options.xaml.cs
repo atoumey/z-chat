@@ -29,6 +29,17 @@ namespace ZChat
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            HideAllGrids();
+            generalTreeItem.IsSelected = true;
+
+            channelTextBox.Text = ZChat.FirstChannel;
+            nickNameTextBox.Text = ZChat.InitialNickname;
+            serverTextBox.Text = ZChat.Server;
+            serverPortTextBox.Text = ZChat.ServerPort.ToString();
+            channelKeyTextBox.Text = ZChat.FirstChannelKey;
+
+            saveConnectionInfoCheckBox.IsChecked = ZChat.SaveConnectionInfo;
+
             if (ZChat.RestoreType == ClickRestoreType.SingleClick)
             {
                 singleClickRestore.IsChecked = true;
@@ -65,11 +76,24 @@ namespace ZChat
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
+            DialogResult = false;
             Close();
         }
 
         private void SaveOptions()
         {
+            if (channelTextBox.Text.StartsWith("#"))
+                ZChat.FirstChannel = channelTextBox.Text;
+            else
+                ZChat.FirstChannel = '#' + channelTextBox.Text;
+            ZChat.InitialNickname = nickNameTextBox.Text;
+            ZChat.Server = serverTextBox.Text;
+            try { ZChat.ServerPort = int.Parse(serverPortTextBox.Text); }
+            catch { serverPortTextBox.Text = ZChat.ServerPort.ToString(); }
+            ZChat.FirstChannelKey = channelKeyTextBox.Text;
+
+            ZChat.SaveConnectionInfo = saveConnectionInfoCheckBox.IsChecked.Value;
+
             if (singleClickRestore.IsChecked.Value)
                 ZChat.RestoreType = ClickRestoreType.SingleClick;
             else
@@ -95,40 +119,13 @@ namespace ZChat
             ZChat.TimeStampFormat = timeFormatBox.Text;
             ZChat.WindowsForPrivMsgs = windowsForPrivMsgs.IsChecked.Value;
             ZChat.LastFMUserName = lastfmUserBox.Text;
-
-            SaveConfigurationFile();
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)
         {
             SaveOptions();
+            DialogResult = true;
             Close();
-        }
-
-        private void SaveConfigurationFile()
-        {
-            StringBuilder options = new StringBuilder();
-
-            options.AppendLine("ClickRestoreType:" + ((ZChat.RestoreType == ClickRestoreType.SingleClick) ? "single" : "double"));
-            options.AppendLine("HighlightTrayForJoinQuits:" + ((ZChat.HighlightTrayIconForJoinsAndQuits == true) ? "yes" : "no"));
-            options.AppendLine("UsersBack:" + ZChat.UsersBack.Color.ToString());
-            options.AppendLine("UsersFore:" + ZChat.UsersFore.Color.ToString());
-            options.AppendLine("EntryBack:" + ZChat.EntryBack.Color.ToString());
-            options.AppendLine("EntryFore:" + ZChat.EntryFore.Color.ToString());
-            options.AppendLine("ChatBack:" + ZChat.ChatBack.Color.ToString());
-            options.AppendLine("TimeFore:" + ZChat.TimeFore.Color.ToString());
-            options.AppendLine("NickFore:" + ZChat.NickFore.Color.ToString());
-            options.AppendLine("BracketFore:" + ZChat.BracketFore.Color.ToString());
-            options.AppendLine("TextFore:" + ZChat.TextFore.Color.ToString());
-            options.AppendLine("QueryTextFore:" + ZChat.QueryTextFore.Color.ToString());
-            options.AppendLine("OwnNickFore:" + ZChat.OwnNickFore.Color.ToString());
-            options.AppendLine("LinkFore:" + ZChat.LinkFore.Color.ToString());
-            options.AppendLine("Font:" + ZChat.Font.Source);
-            options.AppendLine("TimestampFormat:" + ZChat.TimeStampFormat);
-            options.AppendLine("WindowsForPrivMsgs:" + ((ZChat.WindowsForPrivMsgs == true) ? "yes" : "no"));
-            options.AppendLine("LastFMUserName:" + ZChat.LastFMUserName);
-
-            File.WriteAllText(App.CONFIG_FILE_NAME, options.ToString());
         }
 
         private void Color_Click(object sender, RoutedEventArgs e)
@@ -166,6 +163,37 @@ namespace ZChat
                 SaveOptions();
                 Close();
             }
+        }
+
+        private void HideAllGrids()
+        {
+            appearanceGrid.Visibility = Visibility.Hidden;
+            highlightingGrid.Visibility = Visibility.Hidden;
+            windowsGrid.Visibility = Visibility.Hidden;
+            miscGrid.Visibility = Visibility.Hidden;
+            generalGrid.Visibility = Visibility.Hidden;
+            colorsGrid.Visibility = Visibility.Hidden;
+            systemTrayGrid.Visibility = Visibility.Hidden;
+        }
+
+        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            HideAllGrids();
+
+            if (e.NewValue == appearanceTreeItem)
+                appearanceGrid.Visibility = Visibility.Visible;
+            if (e.NewValue == highlightingTreeItem)
+                highlightingGrid.Visibility = Visibility.Visible;
+            if (e.NewValue == windowsTreeItem)
+                windowsGrid.Visibility = Visibility.Visible;
+            if (e.NewValue == miscTreeItem)
+                miscGrid.Visibility = Visibility.Visible;
+            if (e.NewValue == generalTreeItem)
+                generalGrid.Visibility = Visibility.Visible;
+            if (e.NewValue == colorsTreeItem)
+                colorsGrid.Visibility = Visibility.Visible;
+            if (e.NewValue == systemTrayTreeItem)
+                systemTrayGrid.Visibility = Visibility.Visible;
         }
     }
 }

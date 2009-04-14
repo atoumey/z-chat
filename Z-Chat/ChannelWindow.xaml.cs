@@ -22,6 +22,7 @@ namespace ZChat
     public partial class ChannelWindow : ChatWindow
     {
         public string Channel;
+        public string ChannelKey;
         private string topic;
 
         public ChannelWindow(App app) : base(app)
@@ -52,7 +53,12 @@ namespace ZChat
             ZChat.IRC.OnTopicChange += new TopicChangeEventHandler(irc_OnTopicChange);
 
             if (ZChat.IRC.IsConnected)
-                ZChat.IRC.RfcJoin(Channel);
+            {
+                if (string.IsNullOrEmpty(ChannelKey))
+                    ZChat.IRC.RfcJoin(Channel, ChannelKey);
+                else
+                    ZChat.IRC.RfcJoin(Channel);
+            }
         }
 
         void ZChat_PropertyChanged(object sender, PropertyChangedEventArgs e)

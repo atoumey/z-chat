@@ -4,96 +4,167 @@
     Title="Options" Height="Auto" Width="Auto"
     Loaded="Window_Loaded" SizeToContent="WidthAndHeight"
     WindowStartupLocation="CenterOwner"
-    KeyUp="Window_KeyUp">
+    KeyUp="Window_KeyUp" ResizeMode="NoResize" >
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <GroupBox Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Header="To Restore from system tray...">
-            <StackPanel>
-                <RadioButton Grid.Row="0" Grid.Column="0" Margin="5,0,0,0" Content="Single click" Name="singleClickRestore"/>
-                <RadioButton Grid.Row="1" Grid.Column="0" Margin="5,0,0,0" Content="Double click" Name="doubleClickRestore"/>
-            </StackPanel>
-        </GroupBox>
-        <CheckBox Grid.Row="1" Grid.Column="0" Content="Highlight tray icon for joins and quits" Margin="5" Name="joinsQuitsHighlight"/>
-        <CheckBox Grid.Row="2" Grid.Column="0" Content="Open windows for private messages" Margin="5" Name="windowsForPrivMsgs"/>
-        <GroupBox Grid.Row="3" Grid.Column="0" Header="Colors">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto" MinWidth="50" />
-                </Grid.ColumnDefinitions>
-                <Label Grid.Row="0" Grid.Column="0" Content="User List Background" HorizontalAlignment="Right"/>
-                <Button Grid.Row="0" Grid.Column="1" Width="50" Click="Color_Click" Name="UsersBack" />
-                <Label Grid.Row="1" Grid.Column="0" Content="User List Foreground" HorizontalAlignment="Right"/>
-                <Button Grid.Row="1" Grid.Column="1" Width="50" Click="Color_Click" Name="UsersFore"/>
-                <Label Grid.Row="2" Grid.Column="0" Content="Input Background" HorizontalAlignment="Right"/>
-                <Button Grid.Row="2" Grid.Column="1" Width="50" Click="Color_Click" Name="EntryBack"/>
-                <Label Grid.Row="3" Grid.Column="0" Content="Input Foreground" HorizontalAlignment="Right"/>
-                <Button Grid.Row="3" Grid.Column="1" Width="50" Click="Color_Click" Name="EntryFore"/>
-                <Label Grid.Row="4" Grid.Column="0" Content="Chat Background" HorizontalAlignment="Right"/>
-                <Button Grid.Row="4" Grid.Column="1" Width="50" Click="Color_Click" Name="ChatBack"/>
-                <Label Grid.Row="5" Grid.Column="0" Content="Timestamps" HorizontalAlignment="Right"/>
-                <Button Grid.Row="5" Grid.Column="1" Width="50" Click="Color_Click" Name="TimeFore"/>
-                <Label Grid.Row="6" Grid.Column="0" Content="Nicknames" HorizontalAlignment="Right"/>
-                <Button Grid.Row="6" Grid.Column="1" Width="50" Click="Color_Click" Name="NickFore"/>
-                <Label Grid.Row="7" Grid.Column="0" Content="Angle Brackets" HorizontalAlignment="Right"/>
-                <Button Grid.Row="7" Grid.Column="1" Width="50" Click="Color_Click" Name="BracketFore"/>
-                <Label Grid.Row="8" Grid.Column="0" Content="Chat Text" HorizontalAlignment="Right"/>
-                <Button Grid.Row="8" Grid.Column="1" Width="50" Click="Color_Click" Name="TextFore"/>
-                <Label Grid.Row="9" Grid.Column="0" Content="Own Nickname" HorizontalAlignment="Right"/>
-                <Button Grid.Row="9" Grid.Column="1" Width="50" Click="Color_Click" Name="OwnNickFore" HorizontalAlignment="Left" Margin="0,1,0,22" Grid.RowSpan="2" />
-                <Label Grid.Row="10" Grid.Column="0" Content="Hyperlinks" HorizontalAlignment="Right"/>
-                <Button Grid.Row="10" Grid.Column="1" Width="50" Click="Color_Click" Name="LinkFore"/>
-                <Label Grid.Row="11" Grid.Column="0" Content="Query Messages" HorizontalAlignment="Right"/>
-                <Button Grid.Row="11" Grid.Column="1" Width="50" Click="Color_Click" Name="QueryTextFore"/>
-            </Grid>
-        </GroupBox> 
-        <Grid Grid.Row="4" Grid.Column="0">
+        <TreeView Grid.Row="0" Grid.Column="0" Grid.RowSpan="6" Width="140" SelectedItemChanged="TreeView_SelectedItemChanged" Name="pagesTreeView">
+            <TreeViewItem Header="General" Name="generalTreeItem" ></TreeViewItem>
+            <TreeViewItem Header="Appearance" Name="appearanceTreeItem" IsExpanded="True">
+                <TreeViewItem Header="Colors" Name="colorsTreeItem" ></TreeViewItem>
+            </TreeViewItem>
+            <TreeViewItem Header="Highlighting" Name="highlightingTreeItem" ></TreeViewItem>
+            <TreeViewItem Header="System Tray" Name="systemTrayTreeItem" ></TreeViewItem>
+            <TreeViewItem Header="Windows" Name="windowsTreeItem" ></TreeViewItem>
+            <TreeViewItem Header="Misc" Name="miscTreeItem" ></TreeViewItem>
+        </TreeView>
+        <Grid Grid.Row="0" Grid.Column="1" Margin="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> 
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" Content="Font" Margin="2"/>
-            <ComboBox Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Name="fontsCombo" DisplayMemberPath="Source" SelectedValuePath="Source" Height="20"/>
-            <Label Grid.Row="1" Grid.Column="0" Content="Time Format" Margin="2"/>
-            <TextBox Grid.Row="1" Grid.Column="1" Margin="2" Name="timeFormatBox" Height="20"/>
-            <Button Grid.Row="1" Grid.Column="2" Content="?" Margin="2" Width="20" Click="TimeFormatHelp_Click" />
-            <Label Grid.Row="2" Grid.Column="0" Content="Last.fm username"/>
-            <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Name="lastfmUserBox" Height="20"/>
-        </Grid>        
-        <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="OK" Margin="3" Padding="3" MinWidth="50" Click="OK_Click"/>
-            <Button Content="Cancel" Margin="3" Padding="3" MinWidth="50" Click="Cancel_Click"/>
-        </StackPanel>
+            <Grid Grid.Row="0" Name="highlightingGrid">
+                <CheckBox Content="Highlight tray icon for joins and quits" Margin="5" Name="joinsQuitsHighlight"/>
+            </Grid>
+            <Grid Grid.Row="0" Name="systemTrayGrid" >
+                <GroupBox Header="To Restore from system tray..." VerticalAlignment="Top">
+                    <StackPanel>
+                        <RadioButton Margin="5,0,0,0" Content="Single click" Name="singleClickRestore"/>
+                        <RadioButton Margin="5,0,0,0" Content="Double click" Name="doubleClickRestore"/>
+                    </StackPanel>
+                </GroupBox>
+            </Grid>
+            <Grid Grid.Row="0" Name="colorsGrid">
+                <GroupBox Header="Colors">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto" MinWidth="50" />
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Row="0" Grid.Column="0" Content="User List Background" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="0" Grid.Column="1" Width="50" Click="Color_Click" Name="UsersBack" />
+                        <Label Grid.Row="1" Grid.Column="0" Content="User List Foreground" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="1" Grid.Column="1" Width="50" Click="Color_Click" Name="UsersFore"/>
+                        <Label Grid.Row="2" Grid.Column="0" Content="Input Background" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="2" Grid.Column="1" Width="50" Click="Color_Click" Name="EntryBack"/>
+                        <Label Grid.Row="3" Grid.Column="0" Content="Input Foreground" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="3" Grid.Column="1" Width="50" Click="Color_Click" Name="EntryFore"/>
+                        <Label Grid.Row="4" Grid.Column="0" Content="Chat Background" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="4" Grid.Column="1" Width="50" Click="Color_Click" Name="ChatBack"/>
+                        <Label Grid.Row="5" Grid.Column="0" Content="Timestamps" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="5" Grid.Column="1" Width="50" Click="Color_Click" Name="TimeFore"/>
+                        <Label Grid.Row="6" Grid.Column="0" Content="Nicknames" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="6" Grid.Column="1" Width="50" Click="Color_Click" Name="NickFore"/>
+                        <Label Grid.Row="7" Grid.Column="0" Content="Angle Brackets" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="7" Grid.Column="1" Width="50" Click="Color_Click" Name="BracketFore"/>
+                        <Label Grid.Row="8" Grid.Column="0" Content="Chat Text" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="8" Grid.Column="1" Width="50" Click="Color_Click" Name="TextFore"/>
+                        <Label Grid.Row="9" Grid.Column="0" Content="Own Nickname" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="9" Grid.Column="1" Width="50" Click="Color_Click" Name="OwnNickFore" HorizontalAlignment="Left" Margin="0,1,0,22" Grid.RowSpan="2" />
+                        <Label Grid.Row="10" Grid.Column="0" Content="Hyperlinks" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="10" Grid.Column="1" Width="50" Click="Color_Click" Name="LinkFore"/>
+                        <Label Grid.Row="11" Grid.Column="0" Content="Query Messages" HorizontalAlignment="Right"/>
+                        <Button Grid.Row="11" Grid.Column="1" Width="50" Click="Color_Click" Name="QueryTextFore"/>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+            <Grid Grid.Row="0" Name="generalGrid">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <GroupBox Grid.Row="0" Header="Basic" VerticalAlignment="Top">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Row="0" Grid.Column="0">Channel</Label>
+                        <TextBox Grid.Row="0" Grid.Column="1" Name="channelTextBox"></TextBox>
+                        <Label Grid.Row="1" Grid.Column="0">Nickname</Label>
+                        <TextBox Grid.Row="1" Grid.Column="1" Name="nickNameTextBox"></TextBox>
+                    </Grid>    
+                </GroupBox>
+                <GroupBox Grid.Row="1" Header="Advanced" VerticalAlignment="Top">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Row="0" Grid.Column="0">Server</Label>
+                        <TextBox Grid.Row="0" Grid.Column="1" Name="serverTextBox"></TextBox>
+                        <Label Grid.Row="1" Grid.Column="0">Server Port</Label>
+                        <TextBox Grid.Row="1" Grid.Column="1" Name="serverPortTextBox"></TextBox>
+                        <Label Grid.Row="2" Grid.Column="0">Channel Key</Label>
+                        <TextBox Grid.Row="2" Grid.Column="1" Name="channelKeyTextBox"></TextBox>
+                    </Grid>
+                </GroupBox>
+                <CheckBox Grid.Row="2" Name="saveConnectionInfoCheckBox" Content="Save connection info to config file"/>
+            </Grid>
+            <Grid Grid.Row="0" Name="appearanceGrid">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0" Content="Font" Margin="2"/>
+                <ComboBox Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Name="fontsCombo" DisplayMemberPath="Source" SelectedValuePath="Source" Height="20"/>
+                <Label Grid.Row="1" Grid.Column="0" Content="Time Format" Margin="2"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="2" Name="timeFormatBox" Height="20"/>
+                <Button Grid.Row="1" Grid.Column="2" Content="?" Margin="2" Width="20" Click="TimeFormatHelp_Click" />
+            </Grid>
+            <Grid Grid.Row="0" Name="windowsGrid">
+                <CheckBox Content="Open windows for private messages" Margin="5" Name="windowsForPrivMsgs"/>
+            </Grid>
+            <Grid Grid.Row="0" Name="miscGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0" Content="Last.fm username"/>
+                <TextBox Grid.Column="1" VerticalAlignment="Top" Margin="2" Name="lastfmUserBox" Height="20"/>
+            </Grid>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="OK" Margin="3" Padding="3" MinWidth="50" Click="OK_Click"/>
+                <Button Content="Cancel" Margin="3" Padding="3" MinWidth="50" Click="Cancel_Click"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>
