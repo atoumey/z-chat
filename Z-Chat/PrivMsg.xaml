@@ -4,7 +4,7 @@
     xmlns:z="clr-namespace:ZChat"
     Title="PrivMsg" Height="300" Width="500"
     Initialized="Window_Initialized"
-    Loaded="Window_Loaded">
+    Loaded="Window_Loaded" Closed="Window_Closed">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>

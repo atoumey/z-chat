@@ -119,7 +119,7 @@ namespace ZChat
         {
             Dispatcher.BeginInvoke(DispatcherPriority.Normal, new VoidDelegate(delegate
             {
-                Title = "Private message with " + QueriedUser;
+                Title = QueriedUser;
             }));
         }
 
@@ -183,6 +183,27 @@ namespace ZChat
                         client.DownloadStringCompleted += new DownloadStringCompletedEventHandler(LastFMdownloadComplete);
                         client.DownloadStringAsync(new Uri("http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + ZChat.LastFMUserName + "&api_key=638e9e076d239d8202be0387769d1da9&limit=1"));
                     }
+                }
+                else if (words[0].Equals("/join", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    bool syntaxError = false;
+                    string channel = null;
+                    string channelKey = null;
+                    if (words.Length >= 2 && !string.IsNullOrEmpty(words[1]))
+                    {
+                        channel = words[1];
+                        if (words.Length == 3)
+                            channelKey = words[2];
+                        else if (words.Length > 3)
+                            syntaxError = true;
+                    }
+                    else syntaxError = true;
+
+                    if (!syntaxError)
+                        ZChat.JoinChannel(channel, channelKey);
+                    else
+                        Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
+                               new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "command syntax is '/join <channelName>'.  Names may not contain spaces.") });
                 }
                 else if (input.StartsWith("/"))
                 {
@@ -297,6 +318,16 @@ namespace ZChat
         public void TakeOutgoingMessage(string message)
         {
             SendMessage(message);
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            ZChat.PropertyChanged -= ZChat_PropertyChanged;
+            ZChat.IRC.OnQueryAction -= IRC_OnQueryAction;
+            ZChat.IRC.OnQueryMessage -= IRC_OnQueryMessage;
+            ZChat.IRC.OnQueryNotice -= IRC_OnQueryNotice;
+            ZChat.IRC.OnNickChange -= IRC_OnNickChange;
+            ZChat.IRC.OnQuit -= IRC_OnQuit;
         }
     }
 }

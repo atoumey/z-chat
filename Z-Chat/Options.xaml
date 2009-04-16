@@ -31,10 +31,10 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Grid Grid.Row="0" Name="highlightingGrid">
-                <CheckBox Content="Highlight tray icon for joins and quits" Margin="5" Name="joinsQuitsHighlight"/>
+            <Grid Grid.Row="0" Name="highlightingGrid" Visibility="Hidden" Margin="5">
+                <CheckBox Content="Highlight tray icon for joins and quits" Name="joinsQuitsHighlight"/>
             </Grid>
-            <Grid Grid.Row="0" Name="systemTrayGrid" >
+            <Grid Grid.Row="0" Name="systemTrayGrid" Visibility="Hidden" Margin="5">
                 <GroupBox Header="To Restore from system tray..." VerticalAlignment="Top">
                     <StackPanel>
                         <RadioButton Margin="5,0,0,0" Content="Single click" Name="singleClickRestore"/>
@@ -42,7 +42,7 @@
                     </StackPanel>
                 </GroupBox>
             </Grid>
-            <Grid Grid.Row="0" Name="colorsGrid">
+            <Grid Grid.Row="0" Name="colorsGrid" Visibility="Hidden" Margin="5">
                 <GroupBox Header="Colors">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -91,13 +91,13 @@
                     </Grid>
                 </GroupBox>
             </Grid>
-            <Grid Grid.Row="0" Name="generalGrid">
+            <Grid Grid.Row="0" Name="generalGrid" Visibility="Hidden" Margin="5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <GroupBox Grid.Row="0" Header="Basic" VerticalAlignment="Top">
+                <GroupBox Grid.Row="0" Header="Basic" VerticalAlignment="Top" Margin="2">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -113,7 +113,7 @@
                         <TextBox Grid.Row="1" Grid.Column="1" Name="nickNameTextBox"></TextBox>
                     </Grid>    
                 </GroupBox>
-                <GroupBox Grid.Row="1" Header="Advanced" VerticalAlignment="Top">
+                <GroupBox Grid.Row="1" Header="Advanced" VerticalAlignment="Top" Margin="2">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -132,9 +132,9 @@
                         <TextBox Grid.Row="2" Grid.Column="1" Name="channelKeyTextBox"></TextBox>
                     </Grid>
                 </GroupBox>
-                <CheckBox Grid.Row="2" Name="saveConnectionInfoCheckBox" Content="Save connection info to config file"/>
+                <CheckBox Grid.Row="2" Name="saveConnectionInfoCheckBox" Content="Save connection info to config file" Margin="5"/>
             </Grid>
-            <Grid Grid.Row="0" Name="appearanceGrid">
+            <Grid Grid.Row="0" Name="appearanceGrid" Visibility="Hidden" Margin="5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -150,10 +150,10 @@
                 <TextBox Grid.Row="1" Grid.Column="1" Margin="2" Name="timeFormatBox" Height="20"/>
                 <Button Grid.Row="1" Grid.Column="2" Content="?" Margin="2" Width="20" Click="TimeFormatHelp_Click" />
             </Grid>
-            <Grid Grid.Row="0" Name="windowsGrid">
+            <Grid Grid.Row="0" Name="windowsGrid" Visibility="Hidden" Margin="5">
                 <CheckBox Content="Open windows for private messages" Margin="5" Name="windowsForPrivMsgs"/>
             </Grid>
-            <Grid Grid.Row="0" Name="miscGrid">
+            <Grid Grid.Row="0" Name="miscGrid" Visibility="Hidden" Margin="5">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>

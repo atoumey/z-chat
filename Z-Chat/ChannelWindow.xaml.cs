@@ -21,9 +21,22 @@ namespace ZChat
 {
     public partial class ChannelWindow : ChatWindow
     {
-        public string Channel;
+        public string Channel
+        {
+            get { return _channel; }
+            set
+            {
+                _channel = value;
+                Title = _channel;
+                if (ZChat.IRC.IsConnected)
+                    ZChat.IRC.RfcJoin(Channel, ChannelKey);
+            }
+        }
+        protected string _channel;
         public string ChannelKey;
         private string topic;
+
+        public ChannelWindow() { }
 
         public ChannelWindow(App app) : base(app)
         {
@@ -51,14 +64,6 @@ namespace ZChat
             ZChat.IRC.OnChannelAction += new ActionEventHandler(irc_OnChannelAction);
             ZChat.IRC.OnTopic += new TopicEventHandler(irc_OnTopic);
             ZChat.IRC.OnTopicChange += new TopicChangeEventHandler(irc_OnTopicChange);
-
-            if (ZChat.IRC.IsConnected)
-            {
-                if (string.IsNullOrEmpty(ChannelKey))
-                    ZChat.IRC.RfcJoin(Channel, ChannelKey);
-                else
-                    ZChat.IRC.RfcJoin(Channel);
-            }
         }
 
         void ZChat_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -392,6 +397,27 @@ namespace ZChat
                         client.DownloadStringAsync(new Uri("http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + ZChat.LastFMUserName + "&api_key=638e9e076d239d8202be0387769d1da9&limit=1"));
                     }
                 }
+                else if (words[0].Equals("/join", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    bool syntaxError = false;
+                    string channel = null;
+                    string channelKey = null;
+                    if (words.Length >= 2 && !string.IsNullOrEmpty(words[1]))
+                    {
+                        channel = words[1];
+                        if (words.Length == 3)
+                            channelKey = words[2];
+                        else if (words.Length > 3) 
+                            syntaxError = true;
+                    }
+                    else syntaxError = true;
+
+                    if (!syntaxError)
+                        ZChat.JoinChannel(channel, channelKey);
+                    else
+                        Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
+                               new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "command syntax is '/join <channelName>'.  Names may not contain spaces.") });
+                }
                 else if (input.StartsWith("/"))
                 {
                     Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
@@ -484,6 +510,27 @@ namespace ZChat
 
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, "->*" + nick + "*") },
                                    new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, message) });
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            ZChat.PropertyChanged -= ZChat_PropertyChanged;
+
+            ZChat.IRC.OnPart -= irc_OnPart;
+            ZChat.IRC.OnQuit -= irc_OnQuit;
+            ZChat.IRC.OnChannelMessage -= irc_OnChannelMessage;
+            ZChat.IRC.OnJoin -= irc_OnJoin;
+            ZChat.IRC.OnChannelActiveSynced -= irc_OnChannelActiveSynced;
+            ZChat.IRC.OnConnected -= irc_OnConnected;
+            ZChat.IRC.OnConnectionError -= irc_OnConnectionError;
+            ZChat.IRC.OnDisconnected -= irc_OnDisconnected;
+            ZChat.IRC.OnError -= irc_OnError;
+            ZChat.IRC.OnErrorMessage -= irc_OnErrorMessage;
+            ZChat.IRC.OnKick -= irc_OnKick;
+            ZChat.IRC.OnNickChange -= irc_OnNickChange;
+            ZChat.IRC.OnChannelAction -= irc_OnChannelAction;
+            ZChat.IRC.OnTopic -= irc_OnTopic;
+            ZChat.IRC.OnTopicChange -= irc_OnTopicChange;
         }
     }
 }

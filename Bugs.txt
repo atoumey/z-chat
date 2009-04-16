@@ -2,3 +2,6 @@ option for topic changes cause icon hilight
 plugin component dlls
 display help -- should show all commands at least
 allow joining multiple channels
+for large channels...
+	allow turning off display of joins/quits/parts
+	need a maximum message count before starting to remove old messages

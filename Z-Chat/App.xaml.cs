@@ -31,6 +31,7 @@ namespace ZChat
         public IrcClient IRC = new IrcClient();
 
         private Dictionary<string, PrivMsg> queryWindows = new Dictionary<string, PrivMsg>();
+        private Dictionary<string, ChannelWindow> channelWindows = new Dictionary<string, ChannelWindow>();
 
         public string FirstChannel;
         public string FirstChannelKey;
@@ -70,7 +71,7 @@ namespace ZChat
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
 
             FirstWindow = new ChannelWindow(this);
-            FirstWindow.Closed += new EventHandler(Window_Closed);
+            FirstWindow.Closed += new EventHandler(channelWindow_Closed);
             FirstWindow.Show();
 
             LoadConfigurationFile();
@@ -104,6 +105,8 @@ namespace ZChat
                 FirstWindow.Channel = FirstChannel;
                 FirstWindow.ChannelKey = FirstChannelKey;
 
+                channelWindows.Add(FirstWindow.Channel, FirstWindow);
+
                 IRC.Connect(Server, ServerPort);
             }
         }
@@ -129,6 +132,7 @@ namespace ZChat
                 queryWindows.Add(pair.Key, pair.Value);
         }
 
+        #region Private Queries
         void IRC_OnQueryNotice(object sender, IrcEventArgs e)
         {
             DelegateIncomingQueryMessage(e.Data.Nick, e);
@@ -178,6 +182,23 @@ namespace ZChat
             Window_Closed(sender, e);
         }
 
+        public void SendQueryMessage(string nick, string message)
+        {
+            if (queryWindows.ContainsKey(nick))
+                queryWindows[nick].TakeOutgoingMessage(message);
+            else if (WindowsForPrivMsgs)
+                Dispatcher.BeginInvoke(new VoidDelegate(delegate
+                {
+                    PrivMsg priv = new PrivMsg(this, nick, message);
+                    queryWindows.Add(nick, priv);
+                    priv.Closed += new EventHandler(Query_Closed);
+                    priv.Show();
+                }));
+            else
+                FirstWindow.TakeOutgoingQueryMessage(nick, message);
+        }
+        #endregion
+
         void IRC_OnConnected(object sender, EventArgs e)
         {
             IRC.Login(InitialNickname, "Real Name", 0, "username");
@@ -193,48 +214,6 @@ namespace ZChat
 
                 Shutdown();
             }
-        }
-
-        private void ReadConfigFile()
-        {
-            throw new NotImplementedException();
-        }
-
-        private bool ShowConnectionWindow(ChannelWindow FirstWindow)
-        {
-            ConnectionWindow connWin = new ConnectionWindow(this);
-            connWin.Owner = FirstWindow;
-            if (connWin.ShowDialog().Value)
-            {
-                FirstChannel = connWin.Channel;
-                InitialNickname = connWin.Nickname;
-                Server = connWin.Server;
-                FirstChannelKey = connWin.ChannelKey;
-            }
-            else
-            {
-                Shutdown();
-            }
-
-            return connWin.DialogResult.Value;
-        }
-
-        void AppDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            Exception ex = e.ExceptionObject as Exception;
-            if (ex != null)
-                if (ex is TargetInvocationException)
-                    Error.ShowError(ex.InnerException);
-                else
-                    Error.ShowError(ex);
-        }
-
-        void UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
-        {
-            if (e.Exception is TargetInvocationException)
-                Error.ShowError(e.Exception.InnerException);
-            else
-                Error.ShowError(e.Exception);
         }
 
         public static SolidColorBrush CreateBrushFromString(string colorString)
@@ -257,36 +236,7 @@ namespace ZChat
             return new SolidColorBrush(Color.FromArgb(a, r, g, b));
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void FirePropertyChanged(string propertyName)
-        {
-            if (PropertyChanged != null)
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public void ShowOptions()
-        {
-            Options optionsDialog = new Options(this);
-            if (optionsDialog.ShowDialog().Value)
-                SaveConfigurationFile();
-        }
-
-        public void SendQueryMessage(string nick, string message)
-        {
-            if (queryWindows.ContainsKey(nick))
-                queryWindows[nick].TakeOutgoingMessage(message);
-            else if (WindowsForPrivMsgs)
-                Dispatcher.BeginInvoke(new VoidDelegate(delegate
-                {
-                    PrivMsg priv = new PrivMsg(this, nick, message);
-                    queryWindows.Add(nick, priv);
-                    priv.Closed += new EventHandler(Query_Closed);
-                    priv.Show();
-                }));
-            else
-                FirstWindow.TakeOutgoingQueryMessage(nick, message);
-        }
-
+        #region Config File Load/Save
         private void LoadConfigurationFile()
         {
             try
@@ -406,6 +356,84 @@ namespace ZChat
             options.AppendLine("LastFMUserName:" + LastFMUserName);
 
             File.WriteAllText(App.CONFIG_FILE_NAME, options.ToString());
+        }
+        #endregion
+
+        private bool ShowConnectionWindow(ChannelWindow FirstWindow)
+        {
+            ConnectionWindow connWin = new ConnectionWindow(this);
+            connWin.Owner = FirstWindow;
+            if (connWin.ShowDialog().Value)
+            {
+                FirstChannel = connWin.Channel;
+                InitialNickname = connWin.Nickname;
+                Server = connWin.Server;
+                FirstChannelKey = connWin.ChannelKey;
+            }
+            else
+            {
+                Shutdown();
+            }
+
+            return connWin.DialogResult.Value;
+        }
+
+        public void ShowOptions()
+        {
+            Options optionsDialog = new Options(this);
+            if (optionsDialog.ShowDialog().Value)
+                SaveConfigurationFile();
+        }
+
+        void AppDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Exception ex = e.ExceptionObject as Exception;
+            if (ex != null)
+                if (ex is TargetInvocationException)
+                    Error.ShowError(ex.InnerException);
+                else
+                    Error.ShowError(ex);
+        }
+
+        void UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            if (e.Exception is TargetInvocationException)
+                Error.ShowError(e.Exception.InnerException);
+            else
+                Error.ShowError(e.Exception);
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void FirePropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void JoinChannel(string channel, string channelKey)
+        {
+            ChannelWindow newWindow = new ChannelWindow(this);
+            newWindow.Channel = channel;
+            newWindow.ChannelKey = channelKey;
+
+            newWindow.Closed += channelWindow_Closed;
+            channelWindows.Add(channel, newWindow);
+            newWindow.Show();
+        }
+
+        void channelWindow_Closed(object sender, EventArgs e)
+        {
+            ChannelWindow chan = sender as ChannelWindow;
+            if (chan != null) chan.Closed -= channelWindow_Closed;
+
+            List<string> keysToRemove = new List<string>();
+            foreach (KeyValuePair<string, ChannelWindow> pair in channelWindows)
+                if (pair.Value == sender)
+                    keysToRemove.Add(pair.Key);
+            foreach (string s in keysToRemove)
+                channelWindows.Remove(s);
+
+            Window_Closed(sender, e);
         }
     }
 

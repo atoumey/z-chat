@@ -40,6 +40,8 @@ namespace ZChat
 
         protected List<string> Users = new List<string>();
 
+        public ChatWindow() { }
+
         public ChatWindow(App app) : base(app)
         {
             ZChat.PropertyChanged += ZChat_PropertyChanged;

@@ -87,6 +87,8 @@ namespace ZChat
             }
         }
 
+        public ActivityWindow() { }
+
         public ActivityWindow(App app)
         {
             ZChat = app;

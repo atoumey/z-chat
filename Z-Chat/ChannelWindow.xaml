@@ -4,7 +4,7 @@
     xmlns:z="clr-namespace:ZChat"
     Title="Chat" Height="300" Width="600"
     Initialized="Window_Initialized"
-    Loaded="Window_Loaded"
+    Loaded="Window_Loaded" Closed="Window_Closed"
     KeyDown="Window_KeyDown">
     <Grid>
         <Grid.RowDefinitions>
@@ -22,7 +22,7 @@
             <FlowDocument Name="chatFlowDoc" PagePadding="0" FontSize="12"/>
         </FlowDocumentScrollViewer>
         <GridSplitter Grid.Row="1" Grid.Column="1" Width="2" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext"/>
-        <ScrollViewer Grid.Row="1" Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden">
+        <ScrollViewer Grid.Row="1" Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <ListBox Name="usersListBox" FontSize="12" BorderThickness="1,0,0,0"/>
         </ScrollViewer>
         <TextBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Name="inputTextBox" FontSize="12"/>
