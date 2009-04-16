@@ -155,7 +155,7 @@ namespace ZChat
             else if (!queryWindows.ContainsKey(nick))
             {
                 if (WindowsForPrivMsgs)
-                    Dispatcher.BeginInvoke(new VoidDelegate(delegate
+                    Dispatcher.Invoke(new VoidDelegate(delegate
                     {
                         PrivMsg priv = new PrivMsg(this, nick, e);
                         queryWindows.Add(e.Data.Nick, priv);

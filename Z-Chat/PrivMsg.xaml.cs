@@ -125,10 +125,6 @@ namespace ZChat
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            InputBox = inputTextBox;
-            Document = chatFlowDoc;
-            DocumentScrollViewer = chatScrollViewer;
-
             InputBox.Background = ZChat.EntryBack;
             InputBox.Foreground = ZChat.EntryFore;
             Document.Background = ZChat.ChatBack;

@@ -208,13 +208,16 @@ namespace ZChat
             {
                 AddOutput(group);
 
-                DependencyObject DO = VisualTreeHelper.GetChild(DocumentScrollViewer, 0);
-                while (!(DO is ScrollViewer))
-                    DO = VisualTreeHelper.GetChild(DO, 0);
-                ScrollViewer sv = DO as ScrollViewer;
+                if (VisualTreeHelper.GetChildrenCount(DocumentScrollViewer) > 0)
+                {
+                    DependencyObject DO = VisualTreeHelper.GetChild(DocumentScrollViewer, 0);
+                    while (!(DO is ScrollViewer))
+                        DO = VisualTreeHelper.GetChild(DO, 0);
+                    ScrollViewer sv = DO as ScrollViewer;
 
-                if (sv.VerticalOffset == sv.ScrollableHeight)
-                    sv.ScrollToBottom();
+                    if (sv.VerticalOffset == sv.ScrollableHeight)
+                        sv.ScrollToBottom();
+                }
             }));
         }
 

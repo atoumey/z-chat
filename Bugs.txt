@@ -4,3 +4,4 @@ plugin component dlls
 	ignores (for ignoring joins/quits/parts, maybe regular messages)
 display help -- should show all commands at least
 need a maximum message count before starting to remove old messages
+closing a channel window should part the channel
