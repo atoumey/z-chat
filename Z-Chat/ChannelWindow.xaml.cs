@@ -16,6 +16,7 @@ using System.Net;
 using System.Xml.Linq;
 using System.Linq;
 using System.ComponentModel;
+using System.Globalization;
 
 namespace ZChat
 {
@@ -249,6 +250,13 @@ namespace ZChat
         {
             if (e.Data.Channel != Channel) return;
 
+            NonRfcChannelUser user = (NonRfcChannelUser)ZChat.IRC.GetChannelUser(Channel, e.Data.Nick);
+            string userName;
+            if (user.IsOp) userName = '@' + user.Nick;
+            else if (user.IsHalfop) userName = '%' + user.Nick;
+            else if (user.IsVoice) userName = '+' + user.Nick;
+            else userName = user.Nick;
+
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.BracketFore, "<"),
                                          new ColorTextPair(ZChat.NickFore, e.Data.Nick),
                                          new ColorTextPair(ZChat.BracketFore, ">") },
@@ -272,8 +280,26 @@ namespace ZChat
             Channel chan = ZChat.IRC.GetChannel(Channel);
             
             Users.Clear();
+
+            List<string> ops = new List<string>();
+            List<string> halfops = new List<string>();
+            List<string> voices = new List<string>();
+            List<string> normals = new List<string>();
             if (chan != null)
-                foreach (string user in chan.Users.Keys) Users.Add(user);
+                foreach (NonRfcChannelUser user in chan.Users.Values)
+                {
+                    if (user.IsOp) ops.Add('@' + user.Nick);
+                    else if (user.IsHalfop) halfops.Add('%' + user.Nick);
+                    else if (user.IsVoice) voices.Add('+' + user.Nick);
+                    else normals.Add(user.Nick);
+                }
+
+            StringComparer comparer = StringComparer.Create(CultureInfo.CurrentCulture, true);
+            foreach (List<string> list in new List<string>[] {ops, halfops, voices, normals})
+            {
+                list.Sort(comparer);
+                Users.AddRange(list);
+            }
 
             Dispatcher.BeginInvoke(DispatcherPriority.Normal, new VoidDelegate(delegate
             {
@@ -514,6 +540,8 @@ namespace ZChat
 
         private void Window_Closed(object sender, EventArgs e)
         {
+            ZChat.IRC.RfcPart(Channel);
+
             ZChat.PropertyChanged -= ZChat_PropertyChanged;
 
             ZChat.IRC.OnPart -= irc_OnPart;

@@ -26,6 +26,9 @@ namespace ZChat
         protected FlowDocument Document;
         protected FlowDocumentScrollViewer DocumentScrollViewer;
 
+        public static int OUTPUT_MAX_LINES = 1000;
+        protected int OutputCount = 0;
+
         protected TextBox InputBox
         {
             get { return _inputBox; }
@@ -199,6 +202,10 @@ namespace ZChat
         public void Output(ColorTextPair[] sourcePairs, ColorTextPair[] textPairs)
         {
             if (Document == null || DocumentScrollViewer == null) return;
+
+            OutputCount++;
+            if (OutputCount > OUTPUT_MAX_LINES)
+                Document.Blocks.Remove(Document.Blocks.FirstBlock);
 
             string timeStamp;
             timeStamp = DateTime.Now.ToString(ZChat.TimeStampFormat);
