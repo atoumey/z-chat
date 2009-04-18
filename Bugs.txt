@@ -3,3 +3,4 @@ plugin component dlls
 	more control of activity hilighting (hilight on topic changes)
 	ignores (for ignoring joins/quits/parts, maybe regular messages)
 display help -- should show all commands at least
+if FirstChannel is closed, direct privmsgs to a new channel window
