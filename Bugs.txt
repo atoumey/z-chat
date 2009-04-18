@@ -4,3 +4,4 @@ plugin component dlls
 	ignores (for ignoring joins/quits/parts, maybe regular messages)
 display help -- should show all commands at least
 if FirstChannel is closed, direct privmsgs to a new channel window
+changing clickrestoretype not working for new joins (not first channel)
