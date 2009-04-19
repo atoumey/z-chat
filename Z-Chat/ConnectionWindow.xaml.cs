@@ -61,10 +61,7 @@ namespace ZChat
 
         private void Connect()
         {
-            if (channelBox.Text.StartsWith("#"))
-                Channel = channelBox.Text;
-            else
-                Channel = '#' + channelBox.Text;
+            Channel = channelBox.Text;
             Nickname = nickNameBox.Text;
             Server = serverBox.Text;
             try { ServerPort = int.Parse(serverPortBox.Text); }

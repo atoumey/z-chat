@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.IO.IsolatedStorage;
 using System.Text;
+using System.Windows.Threading;
 
 namespace ZChat
 {
@@ -65,6 +66,9 @@ namespace ZChat
         public bool WindowsForPrivMsgs = false;
         public string LastFMUserName = "";
 
+        List<string> rawMessages = new List<string>();
+        List<string> rawOutgoing = new List<string>();
+
         public App()
         {
             Application.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(UnhandledException);
@@ -101,6 +105,10 @@ namespace ZChat
                 IRC.OnQueryMessage += new IrcEventHandler(IRC_OnQueryMessage);
                 IRC.OnQueryNotice += new IrcEventHandler(IRC_OnQueryNotice);
                 IRC.OnNickChange += new NickChangeEventHandler(IRC_OnNickChange);
+                IRC.OnRawMessage += new IrcEventHandler(IRC_OnRawMessage);
+                IRC.OnJoin += new JoinEventHandler(IRC_OnJoin);
+                IRC.OnReadLine += new ReadLineEventHandler(IRC_OnReadLine);
+                IRC.OnWriteLine += new WriteLineEventHandler(IRC_OnWriteLine);
 
                 FirstWindow.Channel = FirstChannel;
                 FirstWindow.ChannelKey = FirstChannelKey;
@@ -109,6 +117,39 @@ namespace ZChat
 
                 IRC.Connect(Server, ServerPort);
             }
+        }
+
+        void IRC_OnWriteLine(object sender, WriteLineEventArgs e)
+        {
+            rawMessages.Add(DateTime.Now.ToString("HH:mm:ss.ffff") + e.Line);
+        }
+
+        void IRC_OnReadLine(object sender, ReadLineEventArgs e)
+        {
+            //int x = 5;
+        }
+
+        void IRC_OnJoin(object sender, JoinEventArgs e)
+        {
+            // this is how we know the server has successfully joined us to a channel
+            if (e.Who == IRC.Nickname && !channelWindows.ContainsKey(e.Channel))
+            {
+                Dispatcher.Invoke(new VoidDelegate(delegate
+                {
+                    ChannelWindow newWindow = new ChannelWindow(this);
+                    newWindow.Channel = e.Channel;
+                    newWindow.Joined = true;
+
+                    newWindow.Closed += channelWindow_Closed;
+                    channelWindows.Add(e.Channel, newWindow);
+                    newWindow.Show();
+                }));
+            }
+        }
+
+        void IRC_OnRawMessage(object sender, IrcEventArgs e)
+        {
+            rawMessages.Add(DateTime.Now.ToString("HH:mm:ss.ffff") + e.Data.RawMessage);
         }
 
         /// <summary>
@@ -412,19 +453,21 @@ namespace ZChat
 
         public void JoinChannel(string channel, string channelKey)
         {
-            ChannelWindow newWindow = new ChannelWindow(this);
-            newWindow.Channel = channel;
-            newWindow.ChannelKey = channelKey;
-
-            newWindow.Closed += channelWindow_Closed;
-            channelWindows.Add(channel, newWindow);
-            newWindow.Show();
+            IRC.RfcJoin(channel, channelKey);                
         }
 
         void channelWindow_Closed(object sender, EventArgs e)
         {
             ChannelWindow chan = sender as ChannelWindow;
             if (chan != null) chan.Closed -= channelWindow_Closed;
+
+            if (sender == FirstWindow && channelWindows.Count > 1)
+                foreach (KeyValuePair<string, ChannelWindow> pair in channelWindows)
+                    if (pair.Value != FirstWindow)
+                    {
+                        FirstWindow = pair.Value;
+                        continue;
+                    }
 
             List<string> keysToRemove = new List<string>();
             foreach (KeyValuePair<string, ChannelWindow> pair in channelWindows)

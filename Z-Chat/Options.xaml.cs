@@ -82,10 +82,7 @@ namespace ZChat
 
         private void SaveOptions()
         {
-            if (channelTextBox.Text.StartsWith("#"))
-                ZChat.FirstChannel = channelTextBox.Text;
-            else
-                ZChat.FirstChannel = '#' + channelTextBox.Text;
+            ZChat.FirstChannel = channelTextBox.Text;
             ZChat.InitialNickname = nickNameTextBox.Text;
             ZChat.Server = serverTextBox.Text;
             try { ZChat.ServerPort = int.Parse(serverPortTextBox.Text); }

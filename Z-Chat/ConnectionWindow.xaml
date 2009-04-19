@@ -10,6 +10,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="78"/>
@@ -17,9 +18,10 @@
         </Grid.ColumnDefinitions>
         <Label Grid.Row="0" Grid.Column="0" Margin="2" HorizontalAlignment="Right">Channel</Label>
         <TextBox Grid.Row="0" Grid.Column="1" Width="150" Name="channelBox" Height="20" Margin="2">test</TextBox>
-        <Label Grid.Row="1" Grid.Column="0" Margin="2" HorizontalAlignment="Right" >Nickname</Label>
-        <TextBox Grid.Row="1" Grid.Column="1" Width="150" Name="nickNameBox" Height="20" Margin="2"></TextBox>
-        <Expander Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0" Padding="0"  Header="Advanced">
+        <Label Grid.Row="1" Grid.Column="1" Foreground="Gray" >Channel names start with # or &amp;</Label>
+        <Label Grid.Row="2" Grid.Column="0" Margin="2" HorizontalAlignment="Right" >Nickname</Label>
+        <TextBox Grid.Row="2" Grid.Column="1" Width="150" Name="nickNameBox" Height="20" Margin="2"></TextBox>
+        <Expander Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0" Padding="0"  Header="Advanced">
             <Grid Margin="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -38,6 +40,6 @@
                 <TextBox Grid.Column="1" Grid.Row="2" Width="150" Name="channelKeyBox" Height="20" Margin="2"></TextBox>
             </Grid>
         </Expander>
-        <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Center" Padding="3" Margin="4" MinWidth="70" Click="Connect_Click">Connect</Button>
+        <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Center" Padding="3" Margin="4" MinWidth="70" Click="Connect_Click">Connect</Button>
     </Grid>
 </Window>

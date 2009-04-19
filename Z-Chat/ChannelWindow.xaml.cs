@@ -29,8 +29,6 @@ namespace ZChat
             {
                 _channel = value;
                 Title = _channel;
-                if (ZChat.IRC.IsConnected)
-                    ZChat.IRC.RfcJoin(Channel, ChannelKey);
             }
         }
         protected string _channel;
@@ -78,6 +76,12 @@ namespace ZChat
                 usersListBox.FontFamily = ZChat.Font;
                 topicTextBox.Document.FontFamily = ZChat.Font;
             }
+        }
+
+        public bool Joined = false;
+        public void Join()
+        {
+            ZChat.IRC.RfcJoin(Channel, ChannelKey);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -198,7 +202,7 @@ namespace ZChat
         void irc_OnErrorMessage(object sender, IrcEventArgs e)
         {
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.Message) });
+                new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.Message + ": " + e.Data.RawMessageArray[3]) });
 
             UpdateUsers();
         }
@@ -258,7 +262,7 @@ namespace ZChat
             else userName = user.Nick;
 
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.BracketFore, "<"),
-                                         new ColorTextPair(ZChat.NickFore, e.Data.Nick),
+                                         new ColorTextPair(ZChat.NickFore, userName),
                                          new ColorTextPair(ZChat.BracketFore, ">") },
                    new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.Message) });
 
@@ -267,7 +271,7 @@ namespace ZChat
 
         void irc_OnConnected(object sender, EventArgs e)
         {
-            ZChat.IRC.RfcJoin(Channel);
+            Join();
         }
 
         void irc_OnChannelActiveSynced(object sender, IrcEventArgs e)
@@ -301,7 +305,7 @@ namespace ZChat
                 Users.AddRange(list);
             }
 
-            Dispatcher.BeginInvoke(DispatcherPriority.Normal, new VoidDelegate(delegate
+            Dispatcher.Invoke(DispatcherPriority.Normal, new VoidDelegate(delegate
             {
                 usersListBox.Items.Clear();
                 foreach (string user in Users) usersListBox.Items.Add(user);
@@ -311,6 +315,7 @@ namespace ZChat
         void irc_OnJoin(object sender, JoinEventArgs e)
         {
             if (e.Channel != Channel) return;
+            if (e.Who == ZChat.IRC.Nickname) Joined = true;
 
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
                    new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " joined the chat") });

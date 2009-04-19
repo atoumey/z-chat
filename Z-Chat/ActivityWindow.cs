@@ -15,7 +15,7 @@ namespace ZChat
     /// </summary>
     public class ActivityWindow : Window
     {
-        protected App ZChat;
+        protected App ZChat { get; set; }
 
         /// <summary>
         /// Change the state of the window to either show activity or show no activity.
@@ -95,10 +95,8 @@ namespace ZChat
             ZChat.PropertyChanged += ZChat_PropertyChanged;
 
             notifyIcon = new System.Windows.Forms.NotifyIcon();
-            SetRestoreType();
-
             notifyClickHandler = new EventHandler(notifyIcon_Click);
-            notifyIcon.Click += notifyClickHandler;
+            SetRestoreType();
 
             StateChanged += Window_StateChanged;
             IsVisibleChanged += Window_IsVisibleChanged;
