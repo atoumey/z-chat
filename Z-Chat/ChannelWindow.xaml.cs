@@ -29,11 +29,36 @@ namespace ZChat
             {
                 _channel = value;
                 Title = _channel;
+                if (IsMainWindow) Title += " *";
+                notifyIcon.Text = _channel;
             }
         }
         protected string _channel;
         public string ChannelKey;
         private string topic;
+
+        public bool IsMainWindow
+        {
+            get { return _isMainWindow; }
+            set
+            {
+                _isMainWindow = value;
+                if (_isMainWindow)
+                {
+                    Title += " *";
+                    ZChat.IRC.OnErrorMessage += irc_OnErrorMessage;
+                    ZChat.IRC.OnError += irc_OnError;
+                    ZChat.IRC.OnConnectionError += irc_OnConnectionError;
+                }
+                else
+                {
+                    ZChat.IRC.OnErrorMessage -= irc_OnErrorMessage;
+                    ZChat.IRC.OnError -= irc_OnError;
+                    ZChat.IRC.OnConnectionError -= irc_OnConnectionError;
+                }
+            }
+        }
+        private bool _isMainWindow = false;
 
         public ChannelWindow() { }
 
@@ -54,10 +79,7 @@ namespace ZChat
             ZChat.IRC.OnJoin += new JoinEventHandler(irc_OnJoin);
             ZChat.IRC.OnChannelActiveSynced += new IrcEventHandler(irc_OnChannelActiveSynced);
             ZChat.IRC.OnConnected += new EventHandler(irc_OnConnected);
-            ZChat.IRC.OnConnectionError += new EventHandler(irc_OnConnectionError);
             ZChat.IRC.OnDisconnected += new EventHandler(irc_OnDisconnected);
-            ZChat.IRC.OnError += new Meebey.SmartIrc4net.ErrorEventHandler(irc_OnError);
-            ZChat.IRC.OnErrorMessage += new IrcEventHandler(irc_OnErrorMessage);
             ZChat.IRC.OnKick += new KickEventHandler(irc_OnKick);
             ZChat.IRC.OnNickChange += new NickChangeEventHandler(irc_OnNickChange);
             ZChat.IRC.OnChannelAction += new ActionEventHandler(irc_OnChannelAction);
@@ -76,12 +98,6 @@ namespace ZChat
                 usersListBox.FontFamily = ZChat.Font;
                 topicTextBox.Document.FontFamily = ZChat.Font;
             }
-        }
-
-        public bool Joined = false;
-        public void Join()
-        {
-            ZChat.IRC.RfcJoin(Channel, ChannelKey);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -201,8 +217,13 @@ namespace ZChat
 
         void irc_OnErrorMessage(object sender, IrcEventArgs e)
         {
+            string message = e.Data.Message;
+            if (e.Data.ReplyCode == ReplyCode.ErrorNoSuchChannel ||
+                e.Data.ReplyCode == ReplyCode.ErrorNicknameInUse)
+                message += ": " + e.Data.RawMessageArray[3];
+
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
-                new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.Message + ": " + e.Data.RawMessageArray[3]) });
+                new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, message) });
 
             UpdateUsers();
         }
@@ -271,7 +292,7 @@ namespace ZChat
 
         void irc_OnConnected(object sender, EventArgs e)
         {
-            Join();
+            ZChat.IRC.RfcJoin(Channel, ChannelKey);
         }
 
         void irc_OnChannelActiveSynced(object sender, IrcEventArgs e)
@@ -315,7 +336,6 @@ namespace ZChat
         void irc_OnJoin(object sender, JoinEventArgs e)
         {
             if (e.Channel != Channel) return;
-            if (e.Who == ZChat.IRC.Nickname) Joined = true;
 
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
                    new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " joined the chat") });
@@ -444,7 +464,7 @@ namespace ZChat
                     else syntaxError = true;
 
                     if (!syntaxError)
-                        ZChat.JoinChannel(channel, channelKey);
+                        ZChat.IRC.RfcJoin(channel, channelKey);
                     else
                         Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
                                new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "command syntax is '/join <channelName>'.  Names may not contain spaces.") });

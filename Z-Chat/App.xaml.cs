@@ -28,12 +28,15 @@ namespace ZChat
         public static string SERVER_ADDRESS = "irc.mibbit.com";
         public static int SERVER_PORT = 6667;
 
-        ChannelWindow FirstWindow;
+        // The MainOutputWindow is where we output messages that are not specific to a particular
+        // channel or query.
+        ChannelWindow MainOutputWindow;
         public IrcClient IRC = new IrcClient();
 
         private Dictionary<string, PrivMsg> queryWindows = new Dictionary<string, PrivMsg>();
         private Dictionary<string, ChannelWindow> channelWindows = new Dictionary<string, ChannelWindow>();
 
+        #region Options
         public string FirstChannel;
         public string FirstChannelKey;
         public string InitialNickname;
@@ -65,18 +68,19 @@ namespace ZChat
         private FontFamily _font = new FontFamily("Courier New");
         public bool WindowsForPrivMsgs = false;
         public string LastFMUserName = "";
+        #endregion
 
         List<string> rawMessages = new List<string>();
-        List<string> rawOutgoing = new List<string>();
 
         public App()
         {
             Application.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(UnhandledException);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
 
-            FirstWindow = new ChannelWindow(this);
-            FirstWindow.Closed += new EventHandler(channelWindow_Closed);
-            FirstWindow.Show();
+            MainOutputWindow = new ChannelWindow(this);
+            MainOutputWindow.Closed += new EventHandler(channelWindow_Closed);
+            MainOutputWindow.IsMainWindow = true;
+            MainOutputWindow.Show();
 
             LoadConfigurationFile();
 
@@ -89,7 +93,7 @@ namespace ZChat
                 if (Server == null) Server = SERVER_ADDRESS;
                 if (ServerPort == 0) ServerPort = SERVER_PORT;
                 
-                proceed = ShowConnectionWindow(FirstWindow);
+                proceed = ShowConnectionWindow(MainOutputWindow);
             }
 
             if (proceed)
@@ -107,13 +111,12 @@ namespace ZChat
                 IRC.OnNickChange += new NickChangeEventHandler(IRC_OnNickChange);
                 IRC.OnRawMessage += new IrcEventHandler(IRC_OnRawMessage);
                 IRC.OnJoin += new JoinEventHandler(IRC_OnJoin);
-                IRC.OnReadLine += new ReadLineEventHandler(IRC_OnReadLine);
                 IRC.OnWriteLine += new WriteLineEventHandler(IRC_OnWriteLine);
 
-                FirstWindow.Channel = FirstChannel;
-                FirstWindow.ChannelKey = FirstChannelKey;
+                MainOutputWindow.Channel = FirstChannel;
+                MainOutputWindow.ChannelKey = FirstChannelKey;
 
-                channelWindows.Add(FirstWindow.Channel, FirstWindow);
+                channelWindows.Add(MainOutputWindow.Channel, MainOutputWindow);
 
                 IRC.Connect(Server, ServerPort);
             }
@@ -121,12 +124,7 @@ namespace ZChat
 
         void IRC_OnWriteLine(object sender, WriteLineEventArgs e)
         {
-            rawMessages.Add(DateTime.Now.ToString("HH:mm:ss.ffff") + e.Line);
-        }
-
-        void IRC_OnReadLine(object sender, ReadLineEventArgs e)
-        {
-            //int x = 5;
+            rawMessages.Add(DateTime.Now.ToString("HH:mm:ss.ffff ") + e.Line);
         }
 
         void IRC_OnJoin(object sender, JoinEventArgs e)
@@ -138,7 +136,6 @@ namespace ZChat
                 {
                     ChannelWindow newWindow = new ChannelWindow(this);
                     newWindow.Channel = e.Channel;
-                    newWindow.Joined = true;
 
                     newWindow.Closed += channelWindow_Closed;
                     channelWindows.Add(e.Channel, newWindow);
@@ -149,7 +146,7 @@ namespace ZChat
 
         void IRC_OnRawMessage(object sender, IrcEventArgs e)
         {
-            rawMessages.Add(DateTime.Now.ToString("HH:mm:ss.ffff") + e.Data.RawMessage);
+            rawMessages.Add(DateTime.Now.ToString("HH:mm:ss.ffff ") + e.Data.RawMessage);
         }
 
         /// <summary>
@@ -192,7 +189,7 @@ namespace ZChat
         private void DelegateIncomingQueryMessage(string nick, IrcEventArgs e)
         {
             if (string.IsNullOrEmpty(e.Data.Nick))
-                FirstWindow.TakeIncomingQueryMessage(e);
+                MainOutputWindow.TakeIncomingQueryMessage(e);
             else if (!queryWindows.ContainsKey(nick))
             {
                 if (WindowsForPrivMsgs)
@@ -204,7 +201,7 @@ namespace ZChat
                         priv.Show();
                     }));
                 else
-                    FirstWindow.TakeIncomingQueryMessage(e);
+                    MainOutputWindow.TakeIncomingQueryMessage(e);
             }
         }
 
@@ -236,7 +233,7 @@ namespace ZChat
                     priv.Show();
                 }));
             else
-                FirstWindow.TakeOutgoingQueryMessage(nick, message);
+                MainOutputWindow.TakeOutgoingQueryMessage(nick, message);
         }
         #endregion
 
@@ -257,6 +254,7 @@ namespace ZChat
             }
         }
 
+        // Used for storing colors to the conig file
         public static SolidColorBrush CreateBrushFromString(string colorString)
         {
             byte a = 255, r = 255, g = 255, b = 255;
@@ -451,21 +449,18 @@ namespace ZChat
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        public void JoinChannel(string channel, string channelKey)
-        {
-            IRC.RfcJoin(channel, channelKey);                
-        }
-
         void channelWindow_Closed(object sender, EventArgs e)
         {
             ChannelWindow chan = sender as ChannelWindow;
             if (chan != null) chan.Closed -= channelWindow_Closed;
 
-            if (sender == FirstWindow && channelWindows.Count > 1)
+            // if the closing window was our "main" window, we need to choose a new "main" window
+            if (sender == MainOutputWindow && channelWindows.Count > 1)
                 foreach (KeyValuePair<string, ChannelWindow> pair in channelWindows)
-                    if (pair.Value != FirstWindow)
+                    if (pair.Value != MainOutputWindow)
                     {
-                        FirstWindow = pair.Value;
+                        MainOutputWindow = pair.Value;
+                        MainOutputWindow.IsMainWindow = true;
                         continue;
                     }
 

@@ -120,6 +120,7 @@ namespace ZChat
             Dispatcher.BeginInvoke(DispatcherPriority.Normal, new VoidDelegate(delegate
             {
                 Title = QueriedUser;
+                notifyIcon.Text = QueriedUser;
             }));
         }
 
@@ -196,7 +197,7 @@ namespace ZChat
                     else syntaxError = true;
 
                     if (!syntaxError)
-                        ZChat.JoinChannel(channel, channelKey);
+                        ZChat.IRC.RfcJoin(channel, channelKey);
                     else
                         Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "   Error:") },
                                new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "command syntax is '/join <channelName>'.  Names may not contain spaces.") });
