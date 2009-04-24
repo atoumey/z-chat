@@ -165,7 +165,7 @@
                 <Label Grid.Row="0" Grid.Column="0" Content="Last.fm username"/>
                 <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Margin="2" Name="lastfmUserBox" Height="20"/>
                 <Label Grid.Row="1" Grid.Column="0" Content="Hyperlink regex"/>
-                <TextBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Top" Margin="2" Name="hyperlinkRegex" Height="20"/>
+                <TextBox Grid.Row="1" Grid.Column="1" MaxWidth="200" VerticalAlignment="Top" Margin="2" Name="hyperlinkPatternBox" Height="20"/>
             </Grid>
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="OK" Margin="3" Padding="3" MinWidth="50" Click="OK_Click"/>

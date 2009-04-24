@@ -26,6 +26,8 @@ namespace ZChat
         protected FlowDocument Document;
         protected FlowDocumentScrollViewer DocumentScrollViewer;
 
+        protected Regex HyperlinkRegex;
+
         public static int OUTPUT_MAX_LINES = 1000;
         protected int OutputCount = 0;
 
@@ -49,6 +51,7 @@ namespace ZChat
         {
             ZChat.PropertyChanged += ZChat_PropertyChanged;
 
+            HyperlinkRegex = new Regex(ZChat.HyperlinkPattern, RegexOptions.Compiled);
             EntryHistory.Add("");
 
             Loaded += ChatWindow_Loaded;
@@ -63,6 +66,8 @@ namespace ZChat
                 InputBox.Foreground = ZChat.EntryFore;
             if (e.PropertyName == "ChatBack")
                 Document.Background = ZChat.ChatBack;
+            if (e.PropertyName == "HyperlinkPattern")
+                HyperlinkRegex = new Regex(ZChat.HyperlinkPattern, RegexOptions.Compiled);
             if (e.PropertyName == "Font")
             {
                 InputBox.FontFamily = ZChat.Font;
@@ -267,7 +272,7 @@ namespace ZChat
                 {
                     if (!string.IsNullOrEmpty(pair.Text))
                     {
-                        MatchCollection matches = new Regex(ZChat.HyperlinkRegex).Matches(pair.Text);
+                        MatchCollection matches = new Regex(ZChat.HyperlinkPattern).Matches(pair.Text);
                         if (matches.Count > 0)
                         {
                             hasHyperlinks = true;

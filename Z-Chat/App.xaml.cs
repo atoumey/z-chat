@@ -71,7 +71,8 @@ namespace ZChat
         private FontFamily _font = new FontFamily("Courier New");
         public bool WindowsForPrivMsgs = false;
         public string LastFMUserName = "";
-        public string HyperlinkRegex = "(^|[ ]|((https?|ftp):\\/\\/))(([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|net|org|info|biz|gov|name|edu|[a-zA-Z][a-zA-Z]))(:[0-9]+)?((\\/|\\?)[^ \"]*[^ ,;\\.:\">)])?";
+        public string HyperlinkPattern { get { return _hyperlinkPattern; } set { _hyperlinkPattern = value; FirePropertyChanged("HyperlinkPattern"); } }
+        protected string _hyperlinkPattern = "(^|[ ]|((https?|ftp):\\/\\/))(([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|net|org|info|biz|gov|name|edu|[a-zA-Z][a-zA-Z]))(:[0-9]+)?((\\/|\\?)[^ \"]*[^ ,;\\.:\">)])?\)?";
         #endregion
 
         List<string> rawMessages = new List<string>();

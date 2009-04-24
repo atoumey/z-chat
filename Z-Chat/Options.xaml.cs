@@ -72,6 +72,7 @@ namespace ZChat
             timeFormatBox.Text = ZChat.TimeStampFormat;
             windowsForPrivMsgs.IsChecked = ZChat.WindowsForPrivMsgs;
             lastfmUserBox.Text = ZChat.LastFMUserName;
+            hyperlinkPatternBox.Text = ZChat.HyperlinkPattern;
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
@@ -116,6 +117,7 @@ namespace ZChat
             ZChat.TimeStampFormat = timeFormatBox.Text;
             ZChat.WindowsForPrivMsgs = windowsForPrivMsgs.IsChecked.Value;
             ZChat.LastFMUserName = lastfmUserBox.Text;
+            ZChat.HyperlinkPattern = hyperlinkPatternBox.Text;
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)
