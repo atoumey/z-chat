@@ -10,6 +10,9 @@ using System.Collections.Generic;
 using System.IO.IsolatedStorage;
 using System.Text;
 using System.Windows.Threading;
+using System.Net;
+using System.Xml.Linq;
+using System.Linq;
 
 namespace ZChat
 {
@@ -78,6 +81,7 @@ namespace ZChat
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
 
             MainOutputWindow = new ChannelWindow(this);
+            MainOutputWindow.UserInput += ParseUserInput;
             MainOutputWindow.Closed += new EventHandler(channelWindow_Closed);
             MainOutputWindow.IsMainWindow = true;
             MainOutputWindow.Show();
@@ -136,6 +140,7 @@ namespace ZChat
                 {
                     ChannelWindow newWindow = new ChannelWindow(this);
                     newWindow.Channel = e.Channel;
+                    newWindow.UserInput += ParseUserInput;
 
                     newWindow.Closed += channelWindow_Closed;
                     channelWindows.Add(e.Channel, newWindow);
@@ -188,21 +193,35 @@ namespace ZChat
 
         private void DelegateIncomingQueryMessage(string nick, IrcEventArgs e)
         {
-            if (string.IsNullOrEmpty(e.Data.Nick))
+            if (string.IsNullOrEmpty(nick))
                 MainOutputWindow.TakeIncomingQueryMessage(e);
             else if (!queryWindows.ContainsKey(nick))
             {
                 if (WindowsForPrivMsgs)
-                    Dispatcher.Invoke(new VoidDelegate(delegate
-                    {
-                        PrivMsg priv = new PrivMsg(this, nick, e);
-                        queryWindows.Add(e.Data.Nick, priv);
-                        priv.Closed += new EventHandler(Query_Closed);
-                        priv.Show();
-                    }));
+                    Dispatcher.Invoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, e); }));
                 else
                     MainOutputWindow.TakeIncomingQueryMessage(e);
             }
+        }
+
+        private void CreateNewPrivWindow(string nick, string message)
+        {
+            PrivMsg priv = new PrivMsg(this, nick, message);
+            SetupNewPrivWindow(priv, nick);
+        }
+
+        private void CreateNewPrivWindow(string nick, IrcEventArgs e)
+        {
+            PrivMsg priv = new PrivMsg(this, nick, e);
+            SetupNewPrivWindow(priv, nick);
+        }
+
+        private void SetupNewPrivWindow(PrivMsg priv, string nick)
+        {
+            priv.UserInput += ParseUserInput;
+            queryWindows.Add(nick, priv);
+            priv.Closed += new EventHandler(Query_Closed);
+            priv.Show();
         }
 
         void Query_Closed(object sender, EventArgs e)
@@ -225,13 +244,7 @@ namespace ZChat
             if (queryWindows.ContainsKey(nick))
                 queryWindows[nick].TakeOutgoingMessage(message);
             else if (WindowsForPrivMsgs)
-                Dispatcher.BeginInvoke(new VoidDelegate(delegate
-                {
-                    PrivMsg priv = new PrivMsg(this, nick, message);
-                    queryWindows.Add(nick, priv);
-                    priv.Closed += new EventHandler(Query_Closed);
-                    priv.Show();
-                }));
+                Dispatcher.BeginInvoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, message); }));
             else
                 MainOutputWindow.TakeOutgoingQueryMessage(nick, message);
         }
@@ -472,6 +485,184 @@ namespace ZChat
                 channelWindows.Remove(s);
 
             Window_Closed(sender, e);
+        }
+
+        protected void ParseUserInput(ChatWindow sender, string input)
+        {
+            try
+            {
+                string target = (sender is ChannelWindow) ? (sender as ChannelWindow).Channel : (sender as PrivMsg).QueriedUser;
+                string[] words = input.Split(' ');
+
+                if (input.Equals("/clear", StringComparison.CurrentCultureIgnoreCase))
+                    sender.Clear();
+                else if (input.Equals("/options", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    ShowOptions();
+                }
+                else if (words[0].Equals("/me", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    string action;
+                    if (input.Length >= 5)
+                        action = input.Substring(4);
+                    else
+                        action = "";
+                    IRC.SendMessage(SendType.Action, target, action);
+
+                    sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "* "),
+                                                        new ColorTextPair(TextFore, IRC.Nickname) },
+                                  new ColorTextPair[] { new ColorTextPair(TextFore, action) });
+                }
+                else if (words[0].Equals("/nick", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    if (words.Length == 2)
+                        IRC.RfcNick(words[1]);
+                    else
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
+                                      new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/me <newName>'.  Names may not contain spaces.") });
+                }
+                else if (words[0].Equals("/topic", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    if (sender is PrivMsg)
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
+                                      new ColorTextPair[] { new ColorTextPair(TextFore, "Cannot set topic in a private chat") });
+                    else
+                    {
+                        if (input.Length >= 8)
+                            IRC.RfcTopic(target, input.Substring(7));
+                        else
+                            sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
+                                          new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/topic <new topic>'.") });
+                    }
+                }
+                else if (words[0].Equals("/raw", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    if (input.Length >= 6)
+                        IRC.WriteLine(input.Substring(5));
+                    else
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
+                               new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/raw <raw IRC message>'.") });
+                }
+                else if (words[0].Equals("/msg", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    bool syntaxError = false;
+                    if (words.Length >= 2 && !string.IsNullOrEmpty(words[1]))
+                    {
+                        string otherTarget = words[1];
+                        if (words.Length >= 3)
+                        {
+                            string msgText = input.Substring(input.IndexOf(" " + words[1] + " ") + words[1].Length + 2);
+                            SendQueryMessage(otherTarget, msgText);
+                        }
+                        else syntaxError = true;
+                    }
+                    else syntaxError = true;
+
+                    if (syntaxError)
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
+                                      new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/msg <name> <message>'.") });
+                }
+                else if (words[0].Equals("/error", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    string errorText;
+                    if (input.Length >= 8)
+                        errorText = input.Substring(7);
+                    else
+                        errorText = "error";
+
+                    throw new Exception(errorText);
+                }
+                else if (words[0].Equals("/np", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    if (string.IsNullOrEmpty(LastFMUserName))
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
+                                      new ColorTextPair[] { new ColorTextPair(TextFore, "You must choose a Last.fm username on the options dialog.") });
+                    else
+                    {
+                        WebClient client = new WebClient() { Encoding = Encoding.UTF8 };
+                        client.DownloadStringCompleted += new DownloadStringCompletedEventHandler(LastFMdownloadComplete);
+                        client.DownloadStringAsync(new Uri("http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + LastFMUserName + "&api_key=638e9e076d239d8202be0387769d1da9&limit=1"), sender);
+                    }
+                }
+                else if (words[0].Equals("/join", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    bool syntaxError = false;
+                    string channel = null;
+                    string channelKey = null;
+                    if (words.Length >= 2 && !string.IsNullOrEmpty(words[1]))
+                    {
+                        channel = words[1];
+                        if (words.Length == 3)
+                            channelKey = words[2];
+                        else if (words.Length > 3)
+                            syntaxError = true;
+                    }
+                    else syntaxError = true;
+
+                    if (!syntaxError)
+                        IRC.RfcJoin(channel, channelKey);
+                    else
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
+                                      new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/join <channelName>'.  Names may not contain spaces.") });
+                }
+                else if (input.StartsWith("/"))
+                {
+                    sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
+                                  new ColorTextPair[] { new ColorTextPair(TextFore, "command not recognized.") });
+                }
+                else if (!string.IsNullOrEmpty(input))
+                {
+                    IRC.SendMessage(SendType.Message, target, input);
+
+                    sender.Output(new ColorTextPair[] { new ColorTextPair(BracketFore, "<"),
+                                                        new ColorTextPair(OwnNickFore, IRC.Nickname),
+                                                        new ColorTextPair(BracketFore, ">") },
+                                  new ColorTextPair[] { new ColorTextPair(TextFore, input) });
+                }
+            }
+            catch (Exception ex)
+            {
+                Error.ShowError(ex);
+            }
+        }
+
+        private void LastFMdownloadComplete(object sender, DownloadStringCompletedEventArgs e)
+        {
+            ChatWindow window = e.UserState as ChatWindow;
+
+            try
+            {
+                string target = (window is ChannelWindow) ? (window as ChannelWindow).Channel : (window as PrivMsg).QueriedUser;
+
+                XDocument doc = XDocument.Parse(e.Result);
+
+                var tracks = from results in doc.Descendants("track")
+                             select new { name = results.Element("name").Value, artist = results.Element("artist").Value, date = (DateTime)results.Element("date") };
+
+                foreach (var track in tracks)
+                {
+                    if (DateTime.Now.Subtract(track.date).Minutes > 30)
+                    {
+                        window.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
+                                      new ColorTextPair[] { new ColorTextPair(TextFore, "You haven't submitted a song to Last.fm in the last 30 minutes.  Maybe Last.fm submission service is down?") });
+                    }
+                    else
+                    {
+                        string action = "is listening to " + track.name + " by " + track.artist;
+                        IRC.SendMessage(SendType.Action, target, action);
+
+                        window.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "* "),
+                                                            new ColorTextPair(TextFore, IRC.Nickname) },
+                                      new ColorTextPair[] { new ColorTextPair(TextFore, action) });
+                    }
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                window.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
+                              new ColorTextPair[] { new ColorTextPair(TextFore, ex.Message) });
+            }
         }
     }
 

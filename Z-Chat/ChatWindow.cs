@@ -20,7 +20,7 @@ namespace ZChat
     /// </summary>
     public class ChatWindow : ActivityWindow
     {
-        public delegate void InputDelegate(object sender, string input);
+        public delegate void InputDelegate(ChatWindow sender, string input);
         public event InputDelegate UserInput;
 
         protected FlowDocument Document;
@@ -373,6 +373,11 @@ namespace ZChat
                     MessageBox.Show(ex.Message);
                 }
             })).Start(((sender as Hyperlink).Tag as string).Trim());
+        }
+
+        public void Clear()
+        {
+            Document.Blocks.Clear();
         }
     }
 
