@@ -229,7 +229,6 @@ namespace ZChat
         }
 
         protected Thickness paragraphPadding = new Thickness(2.0, 0.0, 0.0, 0.0);
-        protected static Regex HyperlinkPattern = new Regex("(^|[ ]|((https?|ftp):\\/\\/))(([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|net|org|info|biz|gov|name|edu|[a-zA-Z][a-zA-Z]))(:[0-9]+)?((\\/|\\?)[^ \"]*[^ ,;\\.:\">)])?", RegexOptions.Compiled);
         public void AddOutput(TimeSourceTextGroup group)
         {
             Paragraph p = new Paragraph();
@@ -268,7 +267,7 @@ namespace ZChat
                 {
                     if (!string.IsNullOrEmpty(pair.Text))
                     {
-                        MatchCollection matches = HyperlinkPattern.Matches(pair.Text);
+                        MatchCollection matches = new Regex(ZChat.HyperlinkRegex).Matches(pair.Text);
                         if (matches.Count > 0)
                         {
                             hasHyperlinks = true;
