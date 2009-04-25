@@ -72,7 +72,7 @@ namespace ZChat
         public bool WindowsForPrivMsgs = false;
         public string LastFMUserName = "";
         public string HyperlinkPattern { get { return _hyperlinkPattern; } set { _hyperlinkPattern = value; FirePropertyChanged("HyperlinkPattern"); } }
-        protected string _hyperlinkPattern = "(^|[ ]|((https?|ftp):\\/\\/))(([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|net|org|info|biz|gov|name|edu|[a-zA-Z][a-zA-Z]))(:[0-9]+)?((\\/|\\?)[^ \"]*[^ ,;\\.:\">)])?\)?";
+        protected string _hyperlinkPattern = "(^|[ ]|((https?|ftp):\\/\\/))(([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|net|org|info|biz|gov|name|edu|[a-zA-Z][a-zA-Z]))(:[0-9]+)?((\\/|\\?)[^ \"]*[^ ,;\\.:\">)])?\\)?";
         #endregion
 
         List<string> rawMessages = new List<string>();
@@ -522,6 +522,14 @@ namespace ZChat
                     else
                         sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
                                       new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/me <newName>'.  Names may not contain spaces.") });
+                }
+                else if (words[0].Equals("/op", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    ChannelWindow channel = sender as ChannelWindow;
+                    if (channel != null)
+                    {
+
+                    }
                 }
                 else if (words[0].Equals("/topic", StringComparison.CurrentCultureIgnoreCase))
                 {

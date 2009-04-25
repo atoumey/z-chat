@@ -85,6 +85,17 @@ namespace ZChat
             ZChat.IRC.OnChannelAction += new ActionEventHandler(irc_OnChannelAction);
             ZChat.IRC.OnTopic += new TopicEventHandler(irc_OnTopic);
             ZChat.IRC.OnTopicChange += new TopicChangeEventHandler(irc_OnTopicChange);
+            ZChat.IRC.OnModeChange += new IrcEventHandler(IRC_OnModeChange);
+        }
+
+        void IRC_OnModeChange(object sender, IrcEventArgs e)
+        {
+            if (e.Data.Channel != Channel) return;
+
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.RawMessage.Substring(e.Data.RawMessage.IndexOf(" mode ", StringComparison.CurrentCultureIgnoreCase) + 1) + " by " + e.Data.Nick) });
+
+            UpdateUsers();
         }
 
         void ZChat_PropertyChanged(object sender, PropertyChangedEventArgs e)
