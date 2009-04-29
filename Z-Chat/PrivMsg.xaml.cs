@@ -46,8 +46,8 @@ namespace ZChat
         protected PrivMsg(App app, string queriedUserName) : base(app)
         {
             WindowIconName_NoActivity = "ZChat.IRC.ico";
-            WindowIconName_Activity = "ZChat.IRC.ico";
-            TrayIconName_NoActivity = "ZChat.IRCgreen.ico";
+            WindowIconName_Activity = "ZChat.IRCgreen.ico";
+            TrayIconName_NoActivity = "ZChat.IRC.ico";
             TrayIconName_Activity = "ZChat.IRCgreen.ico";
 
             ZChat.PropertyChanged += ZChat_PropertyChanged;
