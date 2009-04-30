@@ -57,11 +57,20 @@ namespace ZChat
             ZChat.IRC.OnNickChange += new NickChangeEventHandler(IRC_OnNickChange);
             ZChat.IRC.OnQuit += new QuitEventHandler(IRC_OnQuit);
             ZChat.IRC.OnErrorMessage += new IrcEventHandler(IRC_OnErrorMessage);
+            ZChat.IRC.OnAway += new AwayEventHandler(IRC_OnAway);
 
             InitializeComponent();
             QueriedUser = queriedUserName;
 
             UpdateTitle();
+        }
+
+        void IRC_OnAway(object sender, AwayEventArgs e)
+        {
+            if (e.Who != QueriedUser) return;
+
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " is now away (" + e.AwayMessage + ")") });
         }
 
         void IRC_OnErrorMessage(object sender, IrcEventArgs e)

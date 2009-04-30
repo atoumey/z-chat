@@ -49,12 +49,14 @@ namespace ZChat
                     ZChat.IRC.OnErrorMessage += irc_OnErrorMessage;
                     ZChat.IRC.OnError += irc_OnError;
                     ZChat.IRC.OnConnectionError += irc_OnConnectionError;
+                    ZChat.IRC.OnInvite += new InviteEventHandler(IRC_OnInvite);
                 }
                 else
                 {
                     ZChat.IRC.OnErrorMessage -= irc_OnErrorMessage;
                     ZChat.IRC.OnError -= irc_OnError;
                     ZChat.IRC.OnConnectionError -= irc_OnConnectionError;
+                    ZChat.IRC.OnInvite -= new InviteEventHandler(IRC_OnInvite);
                 }
             }
         }
@@ -85,10 +87,47 @@ namespace ZChat
             ZChat.IRC.OnChannelAction += new ActionEventHandler(irc_OnChannelAction);
             ZChat.IRC.OnTopic += new TopicEventHandler(irc_OnTopic);
             ZChat.IRC.OnTopicChange += new TopicChangeEventHandler(irc_OnTopicChange);
-            ZChat.IRC.OnModeChange += new IrcEventHandler(IRC_OnModeChange);
+            ZChat.IRC.OnChannelModeChange += new IrcEventHandler(IRC_OnChannelModeChange);
+            ZChat.IRC.OnChannelNotice += new IrcEventHandler(IRC_OnChannelNotice);
+            ZChat.IRC.OnNames += new NamesEventHandler(IRC_OnNames);
+            ZChat.IRC.OnNowAway += new IrcEventHandler(IRC_SelfAwayOrUnaway);
+            ZChat.IRC.OnUnAway += new IrcEventHandler(IRC_SelfAwayOrUnaway);
+            ZChat.IRC.OnAway += new AwayEventHandler(IRC_OnAway);
         }
 
-        void IRC_OnModeChange(object sender, IrcEventArgs e)
+        void IRC_SelfAwayOrUnaway(object sender, IrcEventArgs e)
+        {
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.Message) });
+        }
+
+        void IRC_OnNames(object sender, NamesEventArgs e)
+        {
+            if (e.Channel != Channel) return;
+            UpdateUsers();
+        }
+
+        void IRC_OnInvite(object sender, InviteEventArgs e)
+        {
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " invited you to " + e.Channel) });
+
+            ShowActivity();
+        }
+
+        void IRC_OnChannelNotice(object sender, IrcEventArgs e)
+        {
+            if (e.Data.Channel != Channel) return;
+
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.BracketFore, "-"),
+                                         new ColorTextPair(ZChat.NickFore, ZChat.IRC.Nickname),
+                                         new ColorTextPair(ZChat.BracketFore, "-") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.Message) });
+
+            ShowActivity();
+        }
+
+        void IRC_OnChannelModeChange(object sender, IrcEventArgs e)
         {
             if (e.Data.Channel != Channel) return;
 
@@ -96,6 +135,12 @@ namespace ZChat
                    new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Data.RawMessage.Substring(e.Data.RawMessage.IndexOf(" mode ", StringComparison.CurrentCultureIgnoreCase) + 1) + " by " + e.Data.Nick) });
 
             UpdateUsers();
+        }
+
+        void IRC_OnAway(object sender, AwayEventArgs e)
+        {
+            Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " is away (" + e.AwayMessage + ")") });
         }
 
         void ZChat_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -161,9 +206,9 @@ namespace ZChat
             if (e.Data.Nick == null)
                 source = new ColorTextPair[] {};
             else
-                source = new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, "*"),
+                source = new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, "-"),
                                          new ColorTextPair(ZChat.QueryTextFore, e.Data.Nick),
-                                         new ColorTextPair(ZChat.QueryTextFore, "*") };
+                                         new ColorTextPair(ZChat.QueryTextFore, "-") };
 
             Output(source, new ColorTextPair[] { new ColorTextPair(ZChat.QueryTextFore, e.Data.Message) });
 
@@ -219,7 +264,7 @@ namespace ZChat
             if (e.Channel != Channel) return;
 
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " kicked " + e.Whom) });
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " kicked " + e.Whom + "(" + e.KickReason + ")") });
 
             UpdateUsers();
             if (ZChat.HighlightTrayIconForJoinsAndQuits)
@@ -263,7 +308,7 @@ namespace ZChat
             if (e.Channel != Channel) return;
 
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
-                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " left the chat (" + e.PartMessage + ")") });
+                   new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " left the channel (" + e.PartMessage + ")") });
 
             UpdateUsers();
             if (ZChat.HighlightTrayIconForJoinsAndQuits)
@@ -417,15 +462,20 @@ namespace ZChat
             ZChat.IRC.OnJoin -= irc_OnJoin;
             ZChat.IRC.OnChannelActiveSynced -= irc_OnChannelActiveSynced;
             ZChat.IRC.OnConnected -= irc_OnConnected;
-            ZChat.IRC.OnConnectionError -= irc_OnConnectionError;
             ZChat.IRC.OnDisconnected -= irc_OnDisconnected;
-            ZChat.IRC.OnError -= irc_OnError;
-            ZChat.IRC.OnErrorMessage -= irc_OnErrorMessage;
             ZChat.IRC.OnKick -= irc_OnKick;
             ZChat.IRC.OnNickChange -= irc_OnNickChange;
             ZChat.IRC.OnChannelAction -= irc_OnChannelAction;
             ZChat.IRC.OnTopic -= irc_OnTopic;
             ZChat.IRC.OnTopicChange -= irc_OnTopicChange;
+
+            if (IsMainWindow)
+            {
+                ZChat.IRC.OnErrorMessage -= irc_OnErrorMessage;
+                ZChat.IRC.OnError -= irc_OnError;
+                ZChat.IRC.OnConnectionError -= irc_OnConnectionError;
+                ZChat.IRC.OnInvite -= new InviteEventHandler(IRC_OnInvite);
+            }
         }
     }
 }

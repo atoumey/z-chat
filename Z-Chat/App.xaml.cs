@@ -115,10 +115,11 @@ namespace ZChat
                 IRC.OnQueryMessage += new IrcEventHandler(IRC_OnQueryMessage);
                 IRC.OnQueryNotice += new IrcEventHandler(IRC_OnQueryNotice);
                 IRC.OnNickChange += new NickChangeEventHandler(IRC_OnNickChange);
-                IRC.OnRawMessage += new IrcEventHandler(IRC_OnRawMessage);
                 IRC.OnJoin += new JoinEventHandler(IRC_OnJoin);
+#if DEBUG
+                IRC.OnRawMessage += new IrcEventHandler(IRC_OnRawMessage);
                 IRC.OnWriteLine += new WriteLineEventHandler(IRC_OnWriteLine);
-
+#endif
                 MainOutputWindow.Channel = FirstChannel;
                 MainOutputWindow.ChannelKey = FirstChannelKey;
 
@@ -166,10 +167,10 @@ namespace ZChat
             List<string> keysToRemove = new List<string>();
             List<KeyValuePair<string, PrivMsg>> newPrivs = new List<KeyValuePair<string, PrivMsg>>();
             foreach (KeyValuePair<string, PrivMsg> pair in queryWindows)
-                if (pair.Key == e.OldNickname)
+                if (pair.Key == e.OldNickname.ToLower())
                 {
                     keysToRemove.Add(pair.Key);
-                    newPrivs.Add(new KeyValuePair<string, PrivMsg>(e.NewNickname, pair.Value));
+                    newPrivs.Add(new KeyValuePair<string, PrivMsg>(e.NewNickname.ToLower(), pair.Value));
                 }
             foreach (string s in keysToRemove)
                 queryWindows.Remove(s);
@@ -197,7 +198,7 @@ namespace ZChat
         {
             if (string.IsNullOrEmpty(nick))
                 MainOutputWindow.TakeIncomingQueryMessage(e);
-            else if (!queryWindows.ContainsKey(nick))
+            else if (!queryWindows.ContainsKey(nick.ToLower()))
             {
                 if (WindowsForPrivMsgs)
                     Dispatcher.Invoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, e); }));
@@ -221,7 +222,7 @@ namespace ZChat
         private void SetupNewPrivWindow(PrivMsg priv, string nick)
         {
             priv.UserInput += ParseUserInput;
-            queryWindows.Add(nick, priv);
+            queryWindows.Add(nick.ToLower(), priv);
             priv.Closed += new EventHandler(Query_Closed);
             priv.Show();
         }
@@ -243,8 +244,8 @@ namespace ZChat
 
         public void SendQueryMessage(string nick, string message)
         {
-            if (queryWindows.ContainsKey(nick))
-                queryWindows[nick].TakeOutgoingMessage(message);
+            if (queryWindows.ContainsKey(nick.ToLower()))
+                queryWindows[nick.ToLower()].TakeOutgoingMessage(message);
             else if (WindowsForPrivMsgs)
                 Dispatcher.BeginInvoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, message); }));
             else
