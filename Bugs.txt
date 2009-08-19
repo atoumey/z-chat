@@ -6,3 +6,4 @@ display help -- should show all commands at least
 implement more commands (op, voice, ban, etc)
 if FirstChannel is closed, direct privmsgs to a new channel window -- fixed?
 page up, page down while input box is focused should scroll chat up/down
+topic bar still doesn't change background color with main chat area
