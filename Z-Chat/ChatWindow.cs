@@ -45,6 +45,24 @@ namespace ZChat
 
         protected List<string> Users = new List<string>();
 
+        /// <summary>
+        /// Finds the nick in the user list, ignoring status symbols such as @
+        /// </summary>
+        /// <param name="nick"></param>
+        /// <returns></returns>
+        protected bool UsersContains(string nick)
+        {
+            foreach (string user in Users)
+            {
+                string noSymbol = user;
+                if (user.StartsWith("@") || user.StartsWith("+") || user.StartsWith("%"))
+                    noSymbol = user.Substring(1);
+                if (noSymbol == nick)
+                    return true;
+            }
+            return false;
+        }
+
         public ChatWindow() { }
 
         public ChatWindow(App app) : base(app)

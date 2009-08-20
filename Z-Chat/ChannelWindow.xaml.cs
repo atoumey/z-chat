@@ -17,6 +17,7 @@ using System.Xml.Linq;
 using System.Linq;
 using System.ComponentModel;
 using System.Globalization;
+using System.Windows.Controls;
 
 namespace ZChat
 {
@@ -149,10 +150,30 @@ namespace ZChat
                 usersListBox.Background = ZChat.UsersBack;
             if (e.PropertyName == "UsersFore")
                 usersListBox.Foreground = ZChat.UsersFore;
+            if (e.PropertyName == "ChatBack")
+                topicTextBox.Background = ZChat.ChatBack;
+            if (e.PropertyName == "TextFore")
+                RefreshTopicForeColors();
+            if (e.PropertyName == "LinkFore")
+                RefreshTopicForeColors();
             if (e.PropertyName == "Font")
             {
                 usersListBox.FontFamily = ZChat.Font;
                 topicTextBox.Document.FontFamily = ZChat.Font;
+            }
+        }
+
+        private void RefreshTopicForeColors()
+        {
+            foreach (Paragraph p in topicTextBox.Document.Blocks)
+            {
+                foreach (Inline inline in p.Inlines)
+                {
+                    if (inline is Run)
+                        inline.Foreground = ZChat.TextFore;
+                    if (inline is Hyperlink)
+                        inline.Foreground = ZChat.LinkFore;
+                }
             }
         }
 
@@ -250,7 +271,7 @@ namespace ZChat
 
         void irc_OnNickChange(object sender, NickChangeEventArgs e)
         {
-            if (!Users.Contains(e.OldNickname)) return;
+            if (!UsersContains(e.OldNickname)) return;
 
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
                    new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.OldNickname + " changed their name to " + e.NewNickname) });
@@ -317,7 +338,7 @@ namespace ZChat
 
         void irc_OnQuit(object sender, QuitEventArgs e)
         {
-            if (!Users.Contains(e.Who)) return;
+            if (!UsersContains(e.Who)) return;
 
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, "!") },
                    new ColorTextPair[] { new ColorTextPair(ZChat.TextFore, e.Who + " quit (" + e.QuitMessage + ")") });

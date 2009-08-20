@@ -55,10 +55,12 @@ namespace ZChat
         public SolidColorBrush TimeFore = Brushes.Black;
         public SolidColorBrush NickFore = Brushes.Black;
         public SolidColorBrush BracketFore = Brushes.Black;
-        public SolidColorBrush TextFore = Brushes.Black;
+        public SolidColorBrush TextFore { get { return _textFore; } set { _textFore = value; FirePropertyChanged("TextFore"); } }
+        public SolidColorBrush _textFore = Brushes.Black;
         public SolidColorBrush QueryTextFore = Brushes.Maroon;
         public SolidColorBrush OwnNickFore = Brushes.Green;
-        public SolidColorBrush LinkFore = Brushes.Black;
+        public SolidColorBrush LinkFore { get { return _linkFore; } set { _linkFore = value; FirePropertyChanged("LinkFore"); } }
+        public SolidColorBrush _linkFore = Brushes.Black;
         public SolidColorBrush UsersBack { get { return _usersBack; } set { _usersBack = value; FirePropertyChanged("UsersBack"); } }
         private SolidColorBrush _usersBack = Brushes.White;
         public SolidColorBrush UsersFore { get { return _usersFore; } set { _usersFore = value; FirePropertyChanged("UsersFore"); } }
