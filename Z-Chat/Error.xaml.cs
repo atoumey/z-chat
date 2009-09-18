@@ -21,7 +21,7 @@ namespace ZChat
     {
         public Exception Exception;
 
-        public Error(Exception exception)
+        public Error(Exception exception) : base()
         {
             InitializeComponent();
 

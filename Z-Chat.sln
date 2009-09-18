@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C# Express 2008
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Z-Chat", "Z-Chat\Z-Chat.csproj", "{4F334D3F-6FB6-4F93-98DE-803AE6F69FC0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SamplePlugin", "SamplePlugin\SamplePlugin.csproj", "{48B46D1E-A7A7-49DB-B6B7-5C23D3E36721}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -13,6 +15,10 @@ Global
 		{4F334D3F-6FB6-4F93-98DE-803AE6F69FC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F334D3F-6FB6-4F93-98DE-803AE6F69FC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F334D3F-6FB6-4F93-98DE-803AE6F69FC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48B46D1E-A7A7-49DB-B6B7-5C23D3E36721}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48B46D1E-A7A7-49DB-B6B7-5C23D3E36721}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48B46D1E-A7A7-49DB-B6B7-5C23D3E36721}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48B46D1E-A7A7-49DB-B6B7-5C23D3E36721}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -133,6 +133,7 @@
     <Compile Include="Options.xaml.cs">
       <DependentUpon>Options.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Plugin.cs" />
     <Compile Include="PrivMsg.xaml.cs">
       <DependentUpon>PrivMsg.xaml</DependentUpon>
     </Compile>

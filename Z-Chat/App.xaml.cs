@@ -127,7 +127,44 @@ namespace ZChat
 
                 channelWindows.Add(MainOutputWindow.Channel, MainOutputWindow);
 
+                //LoadPlugins();
+
                 IRC.Connect(Server, ServerPort);
+            }
+        }
+
+        public List<Plugin> LoadedPlugins = new List<Plugin>();
+
+        private void LoadPlugins()
+        {
+            string[] pluginPaths = new string[0];
+            if (Directory.Exists(Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName))
+            {
+                try{
+                    pluginPaths = Directory.GetFiles(@"C:\Documents and Settings\Alex\My Documents\Projects\z-chat\SamplePlugin\bin\Debug");
+                }
+                catch (Exception exc)
+                {
+                    MessageBox.Show("Could not access plugin directory");
+                }
+
+                foreach (string pluginPath in pluginPaths)
+                {
+                    try
+                    {
+                        Assembly pluginAssembly = Assembly.LoadFile(pluginPath);
+                        foreach (Type type in pluginAssembly.GetTypes())
+                        {
+                            if (type.IsSubclassOf(typeof(Plugin)))
+                            {
+                                Plugin plugin = type.GetConstructor(Type.EmptyTypes).Invoke(null) as Plugin;
+                                plugin.Initialize(this);
+                                LoadedPlugins.Add(plugin as Plugin);
+                            }
+                        }
+                    }
+                    catch (Exception exc) { }
+                }
             }
         }
 
@@ -437,6 +474,7 @@ namespace ZChat
 
         public void ShowOptions()
         {
+            //Application.ResourceAssembly
             Options optionsDialog = new Options(this);
             if (optionsDialog.ShowDialog().Value)
                 SaveConfigurationFile();

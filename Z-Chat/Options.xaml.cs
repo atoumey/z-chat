@@ -19,7 +19,7 @@ namespace ZChat
     {
         public App ZChat;
 
-        public Options(App parent)
+        public Options(App parent) : base()
         {
             InitializeComponent();
 
@@ -73,6 +73,10 @@ namespace ZChat
             windowsForPrivMsgs.IsChecked = ZChat.WindowsForPrivMsgs;
             lastfmUserBox.Text = ZChat.LastFMUserName;
             hyperlinkPatternBox.Text = ZChat.HyperlinkPattern;
+
+            foreach (Plugin plugin in ZChat.LoadedPlugins)
+                foreach (Grid pluginGrid in plugin.GetOptionGrids())
+                    mainGrid.Children.Add(pluginGrid);
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
