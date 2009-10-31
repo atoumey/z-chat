@@ -14,6 +14,11 @@ using System.Net;
 using System.Xml.Linq;
 using System.Linq;
 
+using IronPython;
+using IronPython.Hosting;
+using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting;
+
 namespace ZChat
 {
     /// <summary>
@@ -127,7 +132,7 @@ namespace ZChat
 
                 channelWindows.Add(MainOutputWindow.Channel, MainOutputWindow);
 
-                //LoadPlugins();
+                LoadPlugins();
 
                 IRC.Connect(Server, ServerPort);
             }
@@ -137,34 +142,24 @@ namespace ZChat
 
         private void LoadPlugins()
         {
-            string[] pluginPaths = new string[0];
-            if (Directory.Exists(Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName))
-            {
-                try{
-                    pluginPaths = Directory.GetFiles(@"C:\Documents and Settings\Alex\My Documents\Projects\z-chat\SamplePlugin\bin\Debug");
-                }
-                catch (Exception exc)
-                {
-                    MessageBox.Show("Could not access plugin directory");
-                }
+            ScriptEngine engine;
+            ScriptScope scope;
 
-                foreach (string pluginPath in pluginPaths)
-                {
-                    try
-                    {
-                        Assembly pluginAssembly = Assembly.LoadFile(pluginPath);
-                        foreach (Type type in pluginAssembly.GetTypes())
-                        {
-                            if (type.IsSubclassOf(typeof(Plugin)))
-                            {
-                                Plugin plugin = type.GetConstructor(Type.EmptyTypes).Invoke(null) as Plugin;
-                                plugin.Initialize(this);
-                                LoadedPlugins.Add(plugin as Plugin);
-                            }
-                        }
-                    }
-                    catch (Exception exc) { }
-                }
+            Dictionary<String, Object> options = new Dictionary<string, object>();
+            options["DivisionOptions"] = PythonDivisionOptions.New;
+            engine = Python.CreateEngine(options);
+            scope = engine.CreateScope();
+
+            try
+            {
+                ScriptSource source = engine.CreateScriptSourceFromString("2+2",
+                        SourceCodeKind.AutoDetect);
+
+                object result = source.Execute(scope);
+            }
+            catch (Exception ex)
+            {
+                return;
             }
         }
 
