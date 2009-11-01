@@ -18,6 +18,8 @@ using IronPython;
 using IronPython.Hosting;
 using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting;
+using IronPython.Runtime;
+using System.Collections.ObjectModel;
 
 namespace ZChat
 {
@@ -38,11 +40,11 @@ namespace ZChat
 
         // The MainOutputWindow is where we output messages that are not specific to a particular
         // channel or query.
-        ChannelWindow MainOutputWindow;
+        public ChannelWindow MainOutputWindow { get; set; }
         public IrcClient IRC = new IrcClient();
 
-        private Dictionary<string, PrivMsg> queryWindows = new Dictionary<string, PrivMsg>();
-        private Dictionary<string, ChannelWindow> channelWindows = new Dictionary<string, ChannelWindow>();
+        public Dictionary<string, PrivMsg> queryWindows = new Dictionary<string, PrivMsg>();
+        public Dictionary<string, ChannelWindow> channelWindows = new Dictionary<string, ChannelWindow>();
 
         #region Options
         public string FirstChannel;
@@ -132,34 +134,91 @@ namespace ZChat
 
                 channelWindows.Add(MainOutputWindow.Channel, MainOutputWindow);
 
-                LoadPlugins();
+                LoadScripts();
 
                 IRC.Connect(Server, ServerPort);
             }
         }
 
-        public List<Plugin> LoadedPlugins = new List<Plugin>();
+        public ObservableCollection<ScriptInfo> LoadedScripts { get { return _loadedScripts; } set { _loadedScripts = value; FirePropertyChanged("LoadedScripts"); } }
+        private ObservableCollection<ScriptInfo> _loadedScripts = new ObservableCollection<ScriptInfo>();
 
-        private void LoadPlugins()
+        ScriptEngine engine;
+
+        private void LoadScripts()
         {
-            ScriptEngine engine;
-            ScriptScope scope;
-
             Dictionary<String, Object> options = new Dictionary<string, object>();
             options["DivisionOptions"] = PythonDivisionOptions.New;
             engine = Python.CreateEngine(options);
-            scope = engine.CreateScope();
 
+            ScriptRuntime runtime = engine.Runtime;
+            runtime.LoadAssembly(Assembly.GetExecutingAssembly());
+            runtime.LoadAssembly(typeof(String).Assembly);
+            runtime.LoadAssembly(typeof(Uri).Assembly);
+            runtime.LoadAssembly(typeof(Brushes).Assembly);
+
+            string pluginsDir = Path.Combine(Environment.CurrentDirectory, "scripts");
+            foreach (string path in Directory.GetFiles(pluginsDir))
+            {
+                if (path.ToLower().EndsWith(".py"))
+                {
+                    CreatePlugin(path);
+                }
+            }
+        }
+
+        public class ScriptInfo
+        {
+            public string Name { get; set; }
+            public string Version { get; set; }
+            public string Author { get; set; }
+            public string Description { get; set; }
+
+            public ScriptScope Scope { get; set; }
+        }
+
+        public void CreatePlugin(string path)
+        {
             try
             {
-                ScriptSource source = engine.CreateScriptSourceFromString("2+2",
-                        SourceCodeKind.AutoDetect);
+                ScriptSource script = engine.CreateScriptSourceFromFile(path);
+                CompiledCode code = script.Compile();
+                ScriptInfo info = new ScriptInfo();
+                info.Scope = engine.CreateScope();
+                info.Scope.SetVariable("zchat", this);
+                code.Execute(info.Scope);
 
-                object result = source.Execute(scope);
+                object somefunc;
+                if (!info.Scope.TryGetVariable("info", out somefunc))
+                    throw new Exception("No info() function found.  This function must be defined and return a tuple of 4 strings (script name, version, author, description).");
+                object val = engine.Operations.Invoke(somefunc);
+                PythonTuple tuple = val as PythonTuple;
+                if (tuple == null) throw new Exception("The info() function returned a " + val.GetType().Name + " instead of a tuple of strings.");
+                if (tuple.Count != 4) throw new Exception("The info() function returned a " + tuple.Count + "-item tuple instead of a 4-item tuple.  It should return Name, Version, Author, Description.");
+
+                info.Name = tuple[0] as string;
+                if (info.Name == null) throw new Exception("The info() function did not return correct data.  The first item in the returned tuple was not a string.  It should be the script name.");
+                info.Version = tuple[1] as string;
+                if (info.Version == null) throw new Exception("The info() function did not return correct data.  The second item in the returned tuple was not a string.  It should be the script version.");
+                info.Author = tuple[2] as string;
+                if (info.Author == null) throw new Exception("The info() function did not return correct data.  The third item in the returned tuple was not a string.  It should be the script author.");
+                info.Description = tuple[3] as string;
+                if (info.Description == null) throw new Exception("The info() function did not return correct data.  The fourth item in the returned tuple was not a string.  It should be the script description.");
+
+                LoadedScripts.Add(info);
             }
-            catch (Exception ex)
+            catch (SyntaxErrorException e)
             {
-                return;
+                ExceptionOperations eo = engine.GetService<ExceptionOperations>();
+                string error = eo.FormatException(e);
+
+                string caption = String.Format("Syntax error in \"{0}\"", Path.GetFileName(path));
+                MessageBox.Show(error, caption, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Error loading the " + Path.GetFileName(path) + " script." + Environment.NewLine + Environment.NewLine + e.Message, 
+                    "Error loading script", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

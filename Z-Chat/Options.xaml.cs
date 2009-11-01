@@ -9,15 +9,17 @@ using System.Threading;
 using System.Diagnostics;
 using System;
 using System.Text;
+using System.ComponentModel;
 
 namespace ZChat
 {
     /// <summary>
     /// Interaction logic for Options.xaml
     /// </summary>
-    public partial class Options : Window
+    public partial class Options : Window, INotifyPropertyChanged
     {
-        public App ZChat;
+        public App ZChat { get { return _zchat; } set { _zchat = value; FirePropertyChanged("ZChat"); } }
+        private App _zchat;
 
         public Options(App parent) : base()
         {
@@ -30,6 +32,7 @@ namespace ZChat
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             HideAllGrids();
+            DataContext = this;
             generalTreeItem.IsSelected = true;
 
             channelTextBox.Text = ZChat.FirstChannel;
@@ -74,9 +77,9 @@ namespace ZChat
             lastfmUserBox.Text = ZChat.LastFMUserName;
             hyperlinkPatternBox.Text = ZChat.HyperlinkPattern;
 
-            foreach (Plugin plugin in ZChat.LoadedPlugins)
-                foreach (Grid pluginGrid in plugin.GetOptionGrids())
-                    mainGrid.Children.Add(pluginGrid);
+            //foreach (Plugin plugin in ZChat.LoadedScripts)
+            //    foreach (Grid pluginGrid in plugin.GetOptionGrids())
+            //        mainGrid.Children.Add(pluginGrid);
         }
 
         private void Cancel_Click(object sender, RoutedEventArgs e)
@@ -177,6 +180,7 @@ namespace ZChat
             generalGrid.Visibility = Visibility.Hidden;
             colorsGrid.Visibility = Visibility.Hidden;
             systemTrayGrid.Visibility = Visibility.Hidden;
+            scriptGrid.Visibility = Visibility.Hidden;
         }
 
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
@@ -197,6 +201,25 @@ namespace ZChat
                 colorsGrid.Visibility = Visibility.Visible;
             if (e.NewValue == systemTrayTreeItem)
                 systemTrayGrid.Visibility = Visibility.Visible;
+            if (e.NewValue == scriptTreeItem)
+                scriptGrid.Visibility = Visibility.Visible;
+        }
+
+        private void LoadScript_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.OpenFileDialog ofd = new System.Windows.Forms.OpenFileDialog();
+            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                string path = ofd.FileName;
+                ZChat.CreatePlugin(path);
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void FirePropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

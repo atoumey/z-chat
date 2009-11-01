@@ -222,6 +222,11 @@ namespace ZChat
             }
         }
 
+        public void Output(string output)
+        {
+            Output(new ColorTextPair[] { new ColorTextPair(Brushes.Black, "") }, new ColorTextPair[] { new ColorTextPair(Brushes.Black, output) });
+        }
+
         public void Output(ColorTextPair[] sourcePairs, ColorTextPair[] textPairs)
         {
             if (Document == null || DocumentScrollViewer == null) return;
