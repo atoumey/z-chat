@@ -1,15 +1,12 @@
-﻿using System.Reflection;
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Reflection;
+using System.Threading;
 using System.Windows;
-using System.Windows.Media.Imaging;
-using System.IO;
-using System.IO.IsolatedStorage;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Threading;
-using System.Diagnostics;
-using System;
-using System.Text;
-using System.ComponentModel;
+using System.Windows.Media.Imaging;
 
 namespace ZChat
 {

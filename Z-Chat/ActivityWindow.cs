@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Reflection;
-using System.Windows.Media.Imaging;
 using System.ComponentModel;
+using System.Reflection;
+using System.Windows;
+using System.Windows.Media.Imaging;
 
 namespace ZChat
 {
@@ -15,12 +12,24 @@ namespace ZChat
     /// </summary>
     public class ActivityWindow : Window
     {
+        protected System.Windows.Forms.NotifyIcon notifyIcon;
+        private System.Drawing.Icon trayIconNoActivity;
+        private System.Drawing.Icon trayIconActivity;
+
+        private BitmapFrame windowIconNoActivity;
+        private BitmapFrame windowIconActivity;
+
+        private EventHandler notifyClickHandler;
+
+        private bool balloonShownAlready = false;
+        private WindowState storedWindowState = WindowState.Normal;
+
         protected App ZChat { get; set; }
 
         /// <summary>
-        /// Change the state of the window to either show activity or show no activity.
+        /// Change either the window icon or the tray icon to show activity, depending on 
+        /// whether the window is minimized to the system tray.
         /// </summary>
-        /// <param name="activity">True if you want the window to indicate activity through the icon</param>
         public void ShowActivity()
         {
             Dispatcher.BeginInvoke(new VoidDelegate(delegate()
@@ -134,17 +143,6 @@ namespace ZChat
             notifyIcon = null;
         }
 
-        protected System.Windows.Forms.NotifyIcon notifyIcon;
-        private System.Drawing.Icon trayIconNoActivity;
-        private System.Drawing.Icon trayIconActivity;
-
-        private BitmapFrame windowIconNoActivity;
-        private BitmapFrame windowIconActivity;
-
-        private EventHandler notifyClickHandler;
-
-        private bool balloonShownAlready = false;
-        private WindowState storedWindowState = WindowState.Normal;
         private void Window_StateChanged(object sender, EventArgs e)
         {
             if (WindowState == WindowState.Minimized)

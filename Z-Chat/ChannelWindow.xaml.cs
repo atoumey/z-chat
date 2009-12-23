@@ -1,23 +1,12 @@
 ﻿using System;
-using System.Collections;
-using System.Text;
-using System.Threading;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Threading;
-using System.IO;
-using System.IO.IsolatedStorage;
-
 using Meebey.SmartIrc4net;
-using System.Collections.Generic;
-using System.Net;
-using System.Xml.Linq;
-using System.Linq;
-using System.ComponentModel;
-using System.Globalization;
-using System.Windows.Controls;
 
 namespace ZChat
 {

@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Linq;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
-using Meebey.SmartIrc4net;
 using System.Windows.Threading;
-using System.Net;
-using System.Xml.Linq;
-using System.ComponentModel;
+using Meebey.SmartIrc4net;
 
 namespace ZChat
 {

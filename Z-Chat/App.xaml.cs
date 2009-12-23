@@ -7,7 +7,6 @@ using Meebey.SmartIrc4net;
 using System.Threading;
 using System.ComponentModel;
 using System.Collections.Generic;
-using System.IO.IsolatedStorage;
 using System.Text;
 using System.Windows.Threading;
 using System.Net;
