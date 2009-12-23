@@ -39,7 +39,7 @@ namespace ZChat
 
         // The MainOutputWindow is where we output messages that are not specific to a particular
         // channel or query.
-        public ChannelWindow MainOutputWindow { get; set; }
+        public ActivityWindow MainOutputWindow { get; set; }
         public IrcClient IRC = new IrcClient();
 
         public Dictionary<string, PrivMsg> queryWindows = new Dictionary<string, PrivMsg>();
@@ -90,10 +90,13 @@ namespace ZChat
             Application.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(UnhandledException);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
 
-            MainOutputWindow = new ChannelWindow(this);
-            MainOutputWindow.UserInput += ParseUserInput;
-            MainOutputWindow.Closed += new EventHandler(channelWindow_Closed);
-            MainOutputWindow.IsMainWindow = true;
+            MainOutputWindow = new ActivityWindow(this);
+            
+            ChannelWindow mainChat = new ChannelWindow(this);
+            mainChat.UserInput += ParseUserInput;
+            mainChat.Closed += new EventHandler(channelWindow_Closed);
+            mainChat.IsMainWindow = true;
+            MainOutputWindow.Chats.Add(mainChat);
             MainOutputWindow.Show();
 
             LoadConfigurationFile();

@@ -18,12 +18,18 @@ namespace ZChat
     /// and a list of chatters whose names can be tab-completed.
     /// The input box also allows scrolling of input history with the up+down keys.
     /// </summary>
-    public class ChatWindow : ActivityWindow
+    public class ChatWindow : INotifyPropertyChanged
     {
+        protected App ZChat { get; set; }
+
+        public string Title { get { return _title; } set { _title = value; FirePropertyChanged("Title"); } }
+        protected string _title;
+
         public delegate void InputDelegate(ChatWindow sender, string input);
         public event InputDelegate UserInput;
 
-        protected FlowDocument Document;
+        protected FlowDocument Document { get { return _document; } set { _document = value; FirePropertyChanged("Document"); } }
+        protected FlowDocument _document;
         protected FlowDocumentScrollViewer DocumentScrollViewer;
 
         protected Regex HyperlinkRegex;
@@ -65,12 +71,14 @@ namespace ZChat
 
         public ChatWindow() { }
 
-        public ChatWindow(App app) : base(app)
+        public ChatWindow(App app)
         {
             ZChat.PropertyChanged += ZChat_PropertyChanged;
 
             HyperlinkRegex = new Regex(ZChat.HyperlinkPattern, RegexOptions.Compiled);
             EntryHistory.Add("");
+
+            Document = new FlowDocument() { PagePadding = new Thickness(0), FontSize = 12 };
 
             Loaded += ChatWindow_Loaded;
             Activated += ChatWindow_Activated;
@@ -405,6 +413,13 @@ namespace ZChat
         public void Clear()
         {
             Document.Blocks.Clear();
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        public void FirePropertyChanged(string propertyName)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 

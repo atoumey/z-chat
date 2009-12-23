@@ -120,6 +120,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="ActivityWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ConnectionWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -150,7 +154,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ActivityWindow.cs" />
+    <Compile Include="ActivityWindow.xaml.cs">
+      <DependentUpon>ActivityWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ChatWindow.cs" />
     <Compile Include="ConnectionWindow.xaml.cs">
       <DependentUpon>ConnectionWindow.xaml</DependentUpon>
