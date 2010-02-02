@@ -1,0 +1,24 @@
+FirstChannel:#testo
+Nickname:Alexg
+Server:irc.mibbit.com
+ServerPort:6667
+FirstChannelKey:
+SaveConnectionInfo:yes
+ClickRestoreType:single
+HighlightTrayForJoinQuits:yes
+UsersBack:#FFFFFFFF
+UsersFore:#FF000000
+EntryBack:#FFFFFFFF
+EntryFore:#FF000000
+ChatBack:#FFFFFFFF
+TimeFore:#FF000000
+NickFore:#FF000000
+BracketFore:#FF000000
+TextFore:#FF000000
+QueryTextFore:#FF800000
+OwnNickFore:#FF008000
+LinkFore:#FF000000
+Font:Courier New
+TimestampFormat:HH:mm:ss 
+WindowsForPrivMsgs:no
+LastFMUserName:
