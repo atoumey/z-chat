@@ -163,13 +163,14 @@ namespace ZChat
             runtime.LoadAssembly(typeof(Brushes).Assembly);
 
             string pluginsDir = Path.Combine(Environment.CurrentDirectory, "scripts");
-            foreach (string path in Directory.GetFiles(pluginsDir))
-            {
-                if (path.ToLower().EndsWith(".py"))
+            if (Directory.Exists(pluginsDir))
+                foreach (string path in Directory.GetFiles(pluginsDir))
                 {
-                    CreatePlugin(path);
+                    if (path.ToLower().EndsWith(".py"))
+                    {
+                        CreatePlugin(path);
+                    }
                 }
-            }
         }
 
         public class ScriptInfo
