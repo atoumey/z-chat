@@ -7,6 +7,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Microsoft.Scripting.Hosting;
+using Microsoft.Scripting;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
 
 namespace ZChat
 {
@@ -18,12 +23,19 @@ namespace ZChat
         public App ZChat { get { return _zchat; } set { _zchat = value; FirePropertyChanged("ZChat"); } }
         private App _zchat;
 
+        private ScriptScope _pythonScope;
+        private MemoryStream _pythonOutput = new MemoryStream();
+
         public Options(App parent) : base()
         {
             InitializeComponent();
 
             Icon = BitmapFrame.Create(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRC.ico"));
             ZChat = parent;
+
+            _pythonScope = ZChat.PythonEngine.CreateScope();
+            ZChat.PythonEngine.Runtime.IO.SetOutput(_pythonOutput, Encoding.UTF8);
+            _pythonScope.SetVariable("zchat", ZChat);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -82,6 +94,7 @@ namespace ZChat
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
+            _pythonOutput.Close();
             Close();
         }
 
@@ -128,6 +141,7 @@ namespace ZChat
         {
             SaveOptions();
             DialogResult = true;
+            _pythonOutput.Close();
             Close();
         }
 
@@ -163,8 +177,11 @@ namespace ZChat
         {
             if (e.Key == System.Windows.Input.Key.Enter)
             {
-                SaveOptions();
-                Close();
+                OK_Click(this, e);
+            }
+            else if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                Cancel_Click(this, e);
             }
         }
 
@@ -178,6 +195,7 @@ namespace ZChat
             colorsGrid.Visibility = Visibility.Hidden;
             systemTrayGrid.Visibility = Visibility.Hidden;
             scriptGrid.Visibility = Visibility.Hidden;
+            pythonConsoleGrid.Visibility = Visibility.Hidden;
         }
 
         private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
@@ -200,6 +218,8 @@ namespace ZChat
                 systemTrayGrid.Visibility = Visibility.Visible;
             if (e.NewValue == scriptTreeItem)
                 scriptGrid.Visibility = Visibility.Visible;
+            if (e.NewValue == pythonConsoleItem)
+                pythonConsoleGrid.Visibility = Visibility.Visible;
         }
 
         private void LoadScript_Click(object sender, RoutedEventArgs e)
@@ -218,5 +238,138 @@ namespace ZChat
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        private void consoleInput_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                e.Handled = true;
+                consoleOutput.AppendText(">> " + consoleInput.Text + Environment.NewLine);
+
+                try
+                {
+                    ScriptSource source = ZChat.PythonEngine.CreateScriptSourceFromString(consoleInput.Text,
+                        SourceCodeKind.InteractiveCode);
+                    
+                    object o = source.Execute(_pythonScope);
+
+                    int length = (int)_pythonOutput.Length;
+                    if (length > 0)
+                    {
+                        Byte[] bytes = new Byte[length];
+
+                        _pythonOutput.Seek(0, SeekOrigin.Begin);
+                        _pythonOutput.Read(bytes, 0, length);
+
+                        consoleOutput.AppendText(Encoding.UTF8.GetString(bytes, 0, length));
+                        _pythonOutput.SetLength(0);
+                    }
+                    else
+                        consoleOutput.AppendText(o.ToString() + Environment.NewLine);
+                }
+                catch (Exception ex)
+                {
+                    consoleOutput.AppendText(ex.Message + Environment.NewLine);
+                }
+
+                consoleOutput.ScrollToEnd();
+                consoleInput.Clear();
+            }
+        }
+
+        bool allow_incomplete(List<string> lines)
+        {
+            if (string.IsNullOrEmpty(lines[lines.Count-1]))
+            {
+                lines[lines.Count-1] = "";
+                return true;
+            }
+            return false;
+        }
+        
+        bool is_complete(string code, bool allow_incomplete)
+        {
+            ScriptSource cmd = ZChat.PythonEngine.CreateScriptSourceFromString(code + '\n', SourceCodeKind.InteractiveCode);
+            ScriptCodeParseResult props = cmd.GetCodeProperties(ZChat.PythonEngine.GetCompilerOptions());
+            if (SourceCodePropertiesUtils.IsCompleteOrInvalid(props, allow_incomplete))
+                return props != ScriptCodeParseResult.Empty;
+            else
+                return false;
+        }
+            
+        void write_input(List<string> lines)
+        {
+            consoleOutput.AppendText(">>" + lines[0] + '\n');
+            //self.history.append(lines[0].lstrip())
+            for (int ii=1; ii<lines.Count; ii++)
+            {
+                consoleOutput.AppendText(".." + lines[ii] + '\n');
+                //self.history.append(line.lstrip())
+            }
+        }
+
+        void run(string code)
+        {
+            string[] lines = code.Split(Environment.NewLine, StringSplitOptions.None);
+            if not lines:
+                self.strm.write(sys.ps1 + '\n')
+                return
+            
+            if self.is_complete(code, self.allow_incomplete(lines)):
+                self.write_input(lines)
+                
+                args = (code, len(lines) > 1)
+                if self.background_execution:
+                    ThreadPool.QueueUserWorkItem(self._run, args)
+                else:
+                    self._run(args)
+                
+                return False
+            else:
+                return True
+        }
+   
+        def _run(self, args):
+            code, multiline = args
+            try:
+                if multiline:
+                    self.run_multiline(code)
+                else:
+                    self.run_singleline(code)
+            except:
+                self.handle_exception(sys.exc_info()[1])    
+            
+        def run_singleline(self, code):
+            try:
+                ret = eval(code, self.namespace)
+            except SyntaxError:
+                self.run_multiline(code)
+            else:
+                if ret is not None:
+                    self.strm.write(repr(ret) + '\n')
+                    if wpf.Dispatcher.CheckAccess():
+                        self.namespace['_'] = ret
+     
+        def run_multiline(self, code):
+            exec code in self.namespace
+            
+        def handle_exception(self, e):
+            self.print_exception(e.clsException)
+            
+        def print_exception(self, clsException):
+            exc_service = self.Engine.GetService[ExceptionOperations]()
+     
+            traceback = exc_service.FormatException(clsException)        
+           
+            lines = [line for line in traceback.splitlines() if 'in <string>' not in line and 'silvershell\\' not in line]
+            if len(lines) == 2:
+                lines = lines[1:]       
+            
+            sys.stderr.write('\n'.join(lines))
+            if Preferences.ExceptionDetail:
+                sys.stderr.write('\nCLR Exception: ')
+                sys.stderr.write(clsException.ToString())
+            
+            sys.stderr.write('\n')
     }
 }

@@ -23,15 +23,15 @@ namespace ZChat
         public delegate void InputDelegate(ChatWindow sender, string input);
         public event InputDelegate UserInput;
 
-        protected FlowDocument Document;
-        protected FlowDocumentScrollViewer DocumentScrollViewer;
+        public FlowDocument Document;
+        public FlowDocumentScrollViewer DocumentScrollViewer;
 
         protected Regex HyperlinkRegex;
 
         public static int OUTPUT_MAX_LINES = 1000;
         protected int OutputCount = 0;
 
-        protected TextBox InputBox
+        public TextBox InputBox
         {
             get { return _inputBox; }
             set
@@ -132,6 +132,10 @@ namespace ZChat
 
         private void InputBox_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.Tab && (e.KeyboardDevice.IsKeyDown(Key.LeftCtrl) || e.KeyboardDevice.IsKeyDown(Key.RightCtrl)))
+            {
+                MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+            }
             if (e.Key == Key.Tab)
             {
                 int lastSpace = InputBox.Text.LastIndexOf(" ");
@@ -431,11 +435,6 @@ namespace ZChat
         {
             Color = color;
             Text = text;
-        }
-
-        public ColorTextPair[] Append(SolidColorBrush color, string text)
-        {
-            return new ColorTextPair[] { this, new ColorTextPair(color, text) };
         }
     }
 }

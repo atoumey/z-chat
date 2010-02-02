@@ -221,6 +221,12 @@
     <EmbeddedResource Include="IRCgreen.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="scripts\googleselect.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="scripts\nowplaying.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="scripts\test.py">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

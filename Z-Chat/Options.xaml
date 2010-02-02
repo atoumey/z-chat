@@ -22,7 +22,9 @@
             <TreeViewItem Header="System Tray" Name="systemTrayTreeItem" ></TreeViewItem>
             <TreeViewItem Header="Windows" Name="windowsTreeItem" ></TreeViewItem>
             <TreeViewItem Header="Misc" Name="miscTreeItem" ></TreeViewItem>
-            <TreeViewItem Header="Scripts" Name="scriptTreeItem" ></TreeViewItem>
+            <TreeViewItem Header="Scripts" Name="scriptTreeItem" IsExpanded="True">
+                <TreeViewItem Header="Python Console" Name="pythonConsoleItem"></TreeViewItem>
+            </TreeViewItem>
         </TreeView>
         <Grid Grid.Row="0" Grid.Column="1" Margin="2">
             <Grid.RowDefinitions>
@@ -32,164 +34,175 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Grid Grid.Row="0" Name="highlightingGrid" Visibility="Hidden" Margin="5">
-                <CheckBox Content="Highlight tray icon for joins and quits" Name="joinsQuitsHighlight"/>
-            </Grid>
-            <Grid Grid.Row="0" Name="systemTrayGrid" Visibility="Hidden" Margin="5">
-                <GroupBox Header="To Restore from system tray..." VerticalAlignment="Top">
-                    <StackPanel>
-                        <RadioButton Margin="5,0,0,0" Content="Single click" Name="singleClickRestore"/>
-                        <RadioButton Margin="5,0,0,0" Content="Double click" Name="doubleClickRestore"/>
-                    </StackPanel>
-                </GroupBox>
-            </Grid>
-            <Grid Grid.Row="0" Name="colorsGrid" Visibility="Hidden" Margin="5">
-                <GroupBox Header="Colors">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto" MinWidth="50" />
-                        </Grid.ColumnDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0" Content="User List Background" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="0" Grid.Column="1" Width="50" Click="Color_Click" Name="UsersBack" />
-                        <Label Grid.Row="1" Grid.Column="0" Content="User List Foreground" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="1" Grid.Column="1" Width="50" Click="Color_Click" Name="UsersFore"/>
-                        <Label Grid.Row="2" Grid.Column="0" Content="Input Background" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="2" Grid.Column="1" Width="50" Click="Color_Click" Name="EntryBack"/>
-                        <Label Grid.Row="3" Grid.Column="0" Content="Input Foreground" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="3" Grid.Column="1" Width="50" Click="Color_Click" Name="EntryFore"/>
-                        <Label Grid.Row="4" Grid.Column="0" Content="Chat Background" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="4" Grid.Column="1" Width="50" Click="Color_Click" Name="ChatBack"/>
-                        <Label Grid.Row="5" Grid.Column="0" Content="Timestamps" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="5" Grid.Column="1" Width="50" Click="Color_Click" Name="TimeFore"/>
-                        <Label Grid.Row="6" Grid.Column="0" Content="Nicknames" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="6" Grid.Column="1" Width="50" Click="Color_Click" Name="NickFore"/>
-                        <Label Grid.Row="7" Grid.Column="0" Content="Angle Brackets" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="7" Grid.Column="1" Width="50" Click="Color_Click" Name="BracketFore"/>
-                        <Label Grid.Row="8" Grid.Column="0" Content="Chat Text" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="8" Grid.Column="1" Width="50" Click="Color_Click" Name="TextFore"/>
-                        <Label Grid.Row="9" Grid.Column="0" Content="Own Nickname" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="9" Grid.Column="1" Width="50" Click="Color_Click" Name="OwnNickFore" HorizontalAlignment="Left" Margin="0,1,0,22" Grid.RowSpan="2" />
-                        <Label Grid.Row="10" Grid.Column="0" Content="Hyperlinks" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="10" Grid.Column="1" Width="50" Click="Color_Click" Name="LinkFore"/>
-                        <Label Grid.Row="11" Grid.Column="0" Content="Query Messages" HorizontalAlignment="Right"/>
-                        <Button Grid.Row="11" Grid.Column="1" Width="50" Click="Color_Click" Name="QueryTextFore"/>
-                    </Grid>
-                </GroupBox>
-            </Grid>
-            <Grid Grid.Row="0" Name="generalGrid" Visibility="Hidden" Margin="5">
+            <Grid Grid.Row="0" Grid.Column="0" Width="500" Height="310">
+                <Grid Grid.Row="0" Name="highlightingGrid" Visibility="Hidden" Margin="5">
+                    <CheckBox Content="Highlight tray icon for joins and quits" Name="joinsQuitsHighlight" Margin="5" />
+                </Grid>
+                <Grid Grid.Row="0" Name="systemTrayGrid" Visibility="Hidden" Margin="5">
+                    <GroupBox Header="To Restore from system tray..." VerticalAlignment="Top">
+                        <StackPanel>
+                            <RadioButton Margin="5,0,0,0" Content="Single click" Name="singleClickRestore"/>
+                            <RadioButton Margin="5,0,0,0" Content="Double click" Name="doubleClickRestore"/>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+                <Grid Grid.Row="0" Name="colorsGrid" Visibility="Hidden" Margin="5">
+                    <GroupBox Header="Colors">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto" MinWidth="50" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0" Content="User List Background" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="0" Grid.Column="1" Width="50" Click="Color_Click" Name="UsersBack" />
+                            <Label Grid.Row="1" Grid.Column="0" Content="User List Foreground" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="1" Grid.Column="1" Width="50" Click="Color_Click" Name="UsersFore"/>
+                            <Label Grid.Row="2" Grid.Column="0" Content="Input Background" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="2" Grid.Column="1" Width="50" Click="Color_Click" Name="EntryBack"/>
+                            <Label Grid.Row="3" Grid.Column="0" Content="Input Foreground" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="3" Grid.Column="1" Width="50" Click="Color_Click" Name="EntryFore"/>
+                            <Label Grid.Row="4" Grid.Column="0" Content="Chat Background" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="4" Grid.Column="1" Width="50" Click="Color_Click" Name="ChatBack"/>
+                            <Label Grid.Row="5" Grid.Column="0" Content="Timestamps" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="5" Grid.Column="1" Width="50" Click="Color_Click" Name="TimeFore"/>
+                            <Label Grid.Row="6" Grid.Column="0" Content="Nicknames" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="6" Grid.Column="1" Width="50" Click="Color_Click" Name="NickFore"/>
+                            <Label Grid.Row="7" Grid.Column="0" Content="Angle Brackets" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="7" Grid.Column="1" Width="50" Click="Color_Click" Name="BracketFore"/>
+                            <Label Grid.Row="8" Grid.Column="0" Content="Chat Text" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="8" Grid.Column="1" Width="50" Click="Color_Click" Name="TextFore"/>
+                            <Label Grid.Row="9" Grid.Column="0" Content="Own Nickname" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="9" Grid.Column="1" Width="50" Click="Color_Click" Name="OwnNickFore" HorizontalAlignment="Left" Margin="0,1,0,22" Grid.RowSpan="2" />
+                            <Label Grid.Row="10" Grid.Column="0" Content="Hyperlinks" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="10" Grid.Column="1" Width="50" Click="Color_Click" Name="LinkFore"/>
+                            <Label Grid.Row="11" Grid.Column="0" Content="Query Messages" HorizontalAlignment="Right"/>
+                            <Button Grid.Row="11" Grid.Column="1" Width="50" Click="Color_Click" Name="QueryTextFore"/>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+                <Grid Grid.Row="0" Name="generalGrid" Visibility="Hidden" Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <GroupBox Grid.Row="0" Header="Basic" VerticalAlignment="Top" Margin="2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0">Channel</Label>
+                            <TextBox Grid.Row="0" Grid.Column="1" Name="channelTextBox"></TextBox>
+                            <Label Grid.Row="1" Grid.Column="0">Nickname</Label>
+                            <TextBox Grid.Row="1" Grid.Column="1" Name="nickNameTextBox"></TextBox>
+                        </Grid>    
+                    </GroupBox>
+                    <GroupBox Grid.Row="1" Header="Advanced" VerticalAlignment="Top" Margin="2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0">Server</Label>
+                            <TextBox Grid.Row="0" Grid.Column="1" Name="serverTextBox"></TextBox>
+                            <Label Grid.Row="1" Grid.Column="0">Server Port</Label>
+                            <TextBox Grid.Row="1" Grid.Column="1" Name="serverPortTextBox"></TextBox>
+                            <Label Grid.Row="2" Grid.Column="0">Channel Key</Label>
+                            <TextBox Grid.Row="2" Grid.Column="1" Name="channelKeyTextBox"></TextBox>
+                        </Grid>
+                    </GroupBox>
+                    <CheckBox Grid.Row="2" Name="saveConnectionInfoCheckBox" Content="Save connection info to config file" Margin="5"/>
+                </Grid>
+                <Grid Grid.Row="0" Name="appearanceGrid" Visibility="Hidden" Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Column="0" Content="Font" Margin="2"/>
+                    <ComboBox Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Name="fontsCombo" DisplayMemberPath="Source" SelectedValuePath="Source" Height="20"/>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Time Format" Margin="2"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Margin="2" Name="timeFormatBox" Height="20"/>
+                    <Button Grid.Row="1" Grid.Column="2" Content="?" Margin="2" Width="20" Click="TimeFormatHelp_Click" />
+                </Grid>
+                <Grid Grid.Row="0" Name="windowsGrid" Visibility="Hidden" Margin="5">
+                    <CheckBox Content="Open windows for private messages" Margin="5" Name="windowsForPrivMsgs"/>
+                </Grid>
+                <Grid Grid.Row="0" Name="miscGrid" Visibility="Hidden" Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0" Content="Last.fm username"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Margin="2" Name="lastfmUserBox" Height="20"/>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Hyperlink regex"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" MaxWidth="200" VerticalAlignment="Top" Margin="2" Name="hyperlinkPatternBox" Height="20"/>
+                </Grid>
+                <Grid Grid.Row="0" Name="scriptGrid" Visibility="Hidden" Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Margin="5" MaxWidth="200" HorizontalAlignment="Center"  TextWrapping="Wrap">Any Python scripts in the "scripts" directory will be loaded at startup.</TextBlock>
+                    <ListView Name="scriptList" Grid.Row="1" ItemsSource="{Binding ZChat.LoadedScripts}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="100"/>
+                                <GridViewColumn Header="Version" DisplayMemberBinding="{Binding Version}"/>
+                                <GridViewColumn Header="Author" DisplayMemberBinding="{Binding Author}" Width="100"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                    <GroupBox Grid.Row="2" Header="Description" Height="75" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <TextBlock Grid.Row="2" Text="{Binding ElementName=scriptList, Path=SelectedItem.Description}" TextWrapping="Wrap" MaxWidth="300"/>
+                    </GroupBox>
+                    <Button Grid.Row="3" Click="LoadScript_Click">Load script...</Button>
+                </Grid>
+                <Grid Grid.Row="0" Name="pythonConsoleGrid" Visibility="Hidden" Margin="5">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <GroupBox Grid.Row="0" Header="Basic" VerticalAlignment="Top" Margin="2">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0">Channel</Label>
-                        <TextBox Grid.Row="0" Grid.Column="1" Name="channelTextBox"></TextBox>
-                        <Label Grid.Row="1" Grid.Column="0">Nickname</Label>
-                        <TextBox Grid.Row="1" Grid.Column="1" Name="nickNameTextBox"></TextBox>
-                    </Grid>    
-                </GroupBox>
-                <GroupBox Grid.Row="1" Header="Advanced" VerticalAlignment="Top" Margin="2">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0">Server</Label>
-                        <TextBox Grid.Row="0" Grid.Column="1" Name="serverTextBox"></TextBox>
-                        <Label Grid.Row="1" Grid.Column="0">Server Port</Label>
-                        <TextBox Grid.Row="1" Grid.Column="1" Name="serverPortTextBox"></TextBox>
-                        <Label Grid.Row="2" Grid.Column="0">Channel Key</Label>
-                        <TextBox Grid.Row="2" Grid.Column="1" Name="channelKeyTextBox"></TextBox>
-                    </Grid>
-                </GroupBox>
-                <CheckBox Grid.Row="2" Name="saveConnectionInfoCheckBox" Content="Save connection info to config file" Margin="5"/>
-            </Grid>
-            <Grid Grid.Row="0" Name="appearanceGrid" Visibility="Hidden" Margin="5">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Label Grid.Column="0" Content="Font" Margin="2"/>
-                <ComboBox Grid.Column="1" Grid.ColumnSpan="2" Margin="2" Name="fontsCombo" DisplayMemberPath="Source" SelectedValuePath="Source" Height="20"/>
-                <Label Grid.Row="1" Grid.Column="0" Content="Time Format" Margin="2"/>
-                <TextBox Grid.Row="1" Grid.Column="1" Margin="2" Name="timeFormatBox" Height="20"/>
-                <Button Grid.Row="1" Grid.Column="2" Content="?" Margin="2" Width="20" Click="TimeFormatHelp_Click" />
-            </Grid>
-            <Grid Grid.Row="0" Name="windowsGrid" Visibility="Hidden" Margin="5">
-                <CheckBox Content="Open windows for private messages" Margin="5" Name="windowsForPrivMsgs"/>
-            </Grid>
-            <Grid Grid.Row="0" Name="miscGrid" Visibility="Hidden" Margin="5">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Label Grid.Row="0" Grid.Column="0" Content="Last.fm username"/>
-                <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Margin="2" Name="lastfmUserBox" Height="20"/>
-                <Label Grid.Row="1" Grid.Column="0" Content="Hyperlink regex"/>
-                <TextBox Grid.Row="1" Grid.Column="1" MaxWidth="200" VerticalAlignment="Top" Margin="2" Name="hyperlinkPatternBox" Height="20"/>
-            </Grid>
-            <Grid Grid.Row="0" Name="scriptGrid" Visibility="Hidden" Margin="5">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Margin="5" MaxWidth="200" HorizontalAlignment="Center"  TextWrapping="Wrap">Any Python scripts in the "scripts" directory will be loaded at startup.</TextBlock>
-                <ListView Name="scriptList" Grid.Row="1" ItemsSource="{Binding ZChat.LoadedScripts}">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="100"/>
-                            <GridViewColumn Header="Version" DisplayMemberBinding="{Binding Version}"/>
-                            <GridViewColumn Header="Author" DisplayMemberBinding="{Binding Author}" Width="100"/>
-                        </GridView>
-                    </ListView.View>
-                </ListView>
-                <GroupBox Grid.Row="2" Header="Description" Height="75" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <TextBlock Grid.Row="2" Text="{Binding ElementName=scriptList, Path=SelectedItem.Description}" TextWrapping="Wrap" MaxWidth="300"/>
-                </GroupBox>
-                <Button Grid.Row="3" Click="LoadScript_Click">Load script...</Button>
-            </Grid> 
+                <TextBox Grid.Row="0" Name="consoleOutput" IsReadOnly="True" VerticalContentAlignment="Bottom"
+                         HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" />
+                <TextBox Grid.Row="1" Name="consoleInput" AcceptsTab="True" KeyUp="consoleInput_KeyUp" />
+            </Grid>
+            </Grid>
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="OK" Margin="3" Padding="3" MinWidth="50" Click="OK_Click"/>
                 <Button Content="Cancel" Margin="3" Padding="3" MinWidth="50" Click="Cancel_Click"/>

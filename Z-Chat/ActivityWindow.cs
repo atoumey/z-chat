@@ -21,7 +21,6 @@ namespace ZChat
 
         private EventHandler notifyClickHandler;
 
-        private bool balloonShownAlready = false;
         private WindowState storedWindowState = WindowState.Normal;
 
         protected App ZChat { get; set; }

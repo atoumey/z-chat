@@ -19,6 +19,8 @@ using Microsoft.Scripting.Hosting;
 using Microsoft.Scripting;
 using IronPython.Runtime;
 using System.Collections.ObjectModel;
+using System.Windows.Documents;
+using System.Windows.Input;
 
 namespace ZChat
 {
@@ -30,20 +32,19 @@ namespace ZChat
         //If no config file is found (or the file does not contain connection info),
         // a connection dialog will be presented.
         //These will be the defaults for the connection dialog.
-        public static string CONFIG_FILE_NAME = "zchat_config.txt";
-        public static string FIRST_CHANNEL = "#test";
-        public static string FIRST_CHANNEL_KEY;
-        public static string INITIAL_NICKNAME = Environment.UserName;
-        public static string SERVER_ADDRESS = "irc.mibbit.com";
-        public static int SERVER_PORT = 6667;
+        public const string CONFIG_FILE_NAME = "zchat_config.txt";
+        public const string FIRST_CHANNEL = "#test";
+        public const string FIRST_CHANNEL_KEY = null;
+        public const string SERVER_ADDRESS = "irc.mibbit.com";
+        public const int SERVER_PORT = 6667;
 
         // The MainOutputWindow is where we output messages that are not specific to a particular
         // channel or query.
         public ChannelWindow MainOutputWindow { get; set; }
         public IrcClient IRC = new IrcClient();
 
-        public Dictionary<string, PrivMsg> queryWindows = new Dictionary<string, PrivMsg>();
-        public Dictionary<string, ChannelWindow> channelWindows = new Dictionary<string, ChannelWindow>();
+        public ObservableCollection<PrivMsg> queryWindows = new ObservableCollection<PrivMsg>();
+        public ObservableCollection<ChannelWindow> channelWindows = new ObservableCollection<ChannelWindow>();
 
         #region Options
         public string FirstChannel;
@@ -87,9 +88,14 @@ namespace ZChat
 
         public App()
         {
+            System.Windows.Controls.MenuItem item = new System.Windows.Controls.MenuItem();
+            item.InputGestureText = "Ctrl+C";
+            item.Command = ApplicationCommands.SelectAll;
+            item.Header = "Copy";
+
             Application.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(UnhandledException);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
-
+   
             MainOutputWindow = new ChannelWindow(this);
             MainOutputWindow.UserInput += ParseUserInput;
             MainOutputWindow.Closed += new EventHandler(channelWindow_Closed);
@@ -103,7 +109,7 @@ namespace ZChat
             {
                 if (FirstChannel == null) FirstChannel = FIRST_CHANNEL;
                 if (FirstChannelKey == null) FirstChannelKey = FIRST_CHANNEL_KEY;
-                if (InitialNickname == null) InitialNickname = INITIAL_NICKNAME;
+                if (InitialNickname == null) InitialNickname = Environment.UserName;
                 if (Server == null) Server = SERVER_ADDRESS;
                 if (ServerPort == 0) ServerPort = SERVER_PORT;
                 
@@ -131,7 +137,7 @@ namespace ZChat
                 MainOutputWindow.Channel = FirstChannel;
                 MainOutputWindow.ChannelKey = FirstChannelKey;
 
-                channelWindows.Add(MainOutputWindow.Channel, MainOutputWindow);
+                channelWindows.Add(MainOutputWindow);
 
                 LoadScripts();
 
@@ -142,15 +148,15 @@ namespace ZChat
         public ObservableCollection<ScriptInfo> LoadedScripts { get { return _loadedScripts; } set { _loadedScripts = value; FirePropertyChanged("LoadedScripts"); } }
         private ObservableCollection<ScriptInfo> _loadedScripts = new ObservableCollection<ScriptInfo>();
 
-        ScriptEngine engine;
+        public ScriptEngine PythonEngine;
 
         private void LoadScripts()
         {
             Dictionary<String, Object> options = new Dictionary<string, object>();
             options["DivisionOptions"] = PythonDivisionOptions.New;
-            engine = Python.CreateEngine(options);
+            PythonEngine = Python.CreateEngine(options);
 
-            ScriptRuntime runtime = engine.Runtime;
+            ScriptRuntime runtime = PythonEngine.Runtime;
             runtime.LoadAssembly(Assembly.GetExecutingAssembly());
             runtime.LoadAssembly(typeof(String).Assembly);
             runtime.LoadAssembly(typeof(Uri).Assembly);
@@ -180,17 +186,17 @@ namespace ZChat
         {
             try
             {
-                ScriptSource script = engine.CreateScriptSourceFromFile(path);
+                ScriptSource script = PythonEngine.CreateScriptSourceFromFile(path);
                 CompiledCode code = script.Compile();
                 ScriptInfo info = new ScriptInfo();
-                info.Scope = engine.CreateScope();
+                info.Scope = PythonEngine.CreateScope();
                 info.Scope.SetVariable("zchat", this);
                 code.Execute(info.Scope);
 
                 object somefunc;
                 if (!info.Scope.TryGetVariable("info", out somefunc))
                     throw new Exception("No info() function found.  This function must be defined and return a tuple of 4 strings (script name, version, author, description).");
-                object val = engine.Operations.Invoke(somefunc);
+                object val = PythonEngine.Operations.Invoke(somefunc);
                 PythonTuple tuple = val as PythonTuple;
                 if (tuple == null) throw new Exception("The info() function returned a " + val.GetType().Name + " instead of a tuple of strings.");
                 if (tuple.Count != 4) throw new Exception("The info() function returned a " + tuple.Count + "-item tuple instead of a 4-item tuple.  It should return Name, Version, Author, Description.");
@@ -208,7 +214,7 @@ namespace ZChat
             }
             catch (SyntaxErrorException e)
             {
-                ExceptionOperations eo = engine.GetService<ExceptionOperations>();
+                ExceptionOperations eo = PythonEngine.GetService<ExceptionOperations>();
                 string error = eo.FormatException(e);
 
                 string caption = String.Format("Syntax error in \"{0}\"", Path.GetFileName(path));
@@ -225,11 +231,13 @@ namespace ZChat
         {
             rawMessages.Add(DateTime.Now.ToString("HH:mm:ss.ffff ") + e.Line);
         }
-
+        
         void IRC_OnJoin(object sender, JoinEventArgs e)
         {
             // this is how we know the server has successfully joined us to a channel
-            if (e.Who == IRC.Nickname && !channelWindows.ContainsKey(e.Channel))
+            if (e.Who == IRC.Nickname 
+                && !channelWindows.Any<ChannelWindow>(delegate(ChannelWindow chan) 
+                { if (chan.Channel == e.Channel) return true; else return false; }))
             {
                 Dispatcher.Invoke(new VoidDelegate(delegate
                 {
@@ -238,7 +246,7 @@ namespace ZChat
                     newWindow.UserInput += ParseUserInput;
 
                     newWindow.Closed += channelWindow_Closed;
-                    channelWindows.Add(e.Channel, newWindow);
+                    channelWindows.Add(newWindow);
                     newWindow.Show();
                 }));
             }
@@ -258,16 +266,9 @@ namespace ZChat
         {
             List<string> keysToRemove = new List<string>();
             List<KeyValuePair<string, PrivMsg>> newPrivs = new List<KeyValuePair<string, PrivMsg>>();
-            foreach (KeyValuePair<string, PrivMsg> pair in queryWindows)
-                if (pair.Key == e.OldNickname.ToLower())
-                {
-                    keysToRemove.Add(pair.Key);
-                    newPrivs.Add(new KeyValuePair<string, PrivMsg>(e.NewNickname.ToLower(), pair.Value));
-                }
-            foreach (string s in keysToRemove)
-                queryWindows.Remove(s);
-            foreach (KeyValuePair<string, PrivMsg> pair in newPrivs)
-                queryWindows.Add(pair.Key, pair.Value);
+            foreach (PrivMsg eachPriv in queryWindows)
+                if (eachPriv.QueriedUser == e.OldNickname.ToLower())
+                    eachPriv.QueriedUser = e.NewNickname.ToLower();
         }
 
         #region Private Queries
@@ -290,7 +291,7 @@ namespace ZChat
         {
             if (string.IsNullOrEmpty(nick))
                 MainOutputWindow.TakeIncomingQueryMessage(e);
-            else if (!queryWindows.ContainsKey(nick.ToLower()))
+            else if (!queryWindows.Any<PrivMsg>(delegate(PrivMsg msg) { return msg.QueriedUser == nick.ToLower(); }))
             {
                 if (WindowsForPrivMsgs)
                     Dispatcher.Invoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, e); }));
@@ -314,7 +315,7 @@ namespace ZChat
         private void SetupNewPrivWindow(PrivMsg priv, string nick)
         {
             priv.UserInput += ParseUserInput;
-            queryWindows.Add(nick.ToLower(), priv);
+            queryWindows.Add(priv);
             priv.Closed += new EventHandler(Query_Closed);
             priv.Show();
         }
@@ -324,11 +325,11 @@ namespace ZChat
             PrivMsg priv = sender as PrivMsg;
             if (priv != null) priv.Closed -= Query_Closed;
 
-            List<string> keysToRemove = new List<string>();
-            foreach (KeyValuePair<string, PrivMsg> pair in queryWindows)
-                if (pair.Value == sender)
-                    keysToRemove.Add(pair.Key);
-            foreach (string s in keysToRemove)
+            List<PrivMsg> msgsToRemove = new List<PrivMsg>();
+            foreach (PrivMsg msg in queryWindows)
+                if (msg == sender)
+                    msgsToRemove.Add(msg);
+            foreach (PrivMsg s in msgsToRemove)
                 queryWindows.Remove(s);
 
             Window_Closed(sender, e);
@@ -336,8 +337,9 @@ namespace ZChat
 
         public void SendQueryMessage(string nick, string message)
         {
-            if (queryWindows.ContainsKey(nick.ToLower()))
-                queryWindows[nick.ToLower()].TakeOutgoingMessage(message);
+            PrivMsg match = queryWindows.Single<PrivMsg>(delegate(PrivMsg chan) { return chan.QueriedUser == nick.ToLower(); });
+            if (match != null)
+                match.TakeOutgoingMessage(message);
             else if (WindowsForPrivMsgs)
                 Dispatcher.BeginInvoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, message); }));
             else
@@ -565,22 +567,30 @@ namespace ZChat
 
             // if the closing window was our "main" window, we need to choose a new "main" window
             if (sender == MainOutputWindow && channelWindows.Count > 1)
-                foreach (KeyValuePair<string, ChannelWindow> pair in channelWindows)
-                    if (pair.Value != MainOutputWindow)
+                foreach (ChannelWindow eachChan in channelWindows)
+                    if (eachChan != MainOutputWindow)
                     {
-                        MainOutputWindow = pair.Value;
+                        MainOutputWindow = eachChan;
                         MainOutputWindow.IsMainWindow = true;
                         continue;
                     }
 
             List<string> keysToRemove = new List<string>();
-            foreach (KeyValuePair<string, ChannelWindow> pair in channelWindows)
-                if (pair.Value == sender)
-                    keysToRemove.Add(pair.Key);
+            foreach (ChannelWindow eachChan in channelWindows)
+                if (eachChan == sender)
+                    keysToRemove.Add(eachChan.Channel);
             foreach (string s in keysToRemove)
-                channelWindows.Remove(s);
+                channelWindows.Remove(channelWindows.Single<ChannelWindow>(delegate(ChannelWindow ch){return ch.Channel == s;}));
 
             Window_Closed(sender, e);
+        }
+
+        public delegate void InputHandler(ChatWindow window, string target, string input, InputEventArgs e);
+        public event InputHandler Input;
+
+        public class InputEventArgs
+        {
+            public bool Handled { get; set; }
         }
 
         protected void ParseUserInput(ChatWindow sender, string input)
@@ -588,6 +598,15 @@ namespace ZChat
             try
             {
                 string target = (sender is ChannelWindow) ? (sender as ChannelWindow).Channel : (sender as PrivMsg).QueriedUser;
+
+                if (Input != null)
+                {
+                    InputEventArgs e = new InputEventArgs();
+                    Input(sender, target, input, e);
+                    if (e.Handled)
+                        return;
+                }
+
                 string[] words = input.Split(' ');
 
                 if (input.Equals("/clear", StringComparison.CurrentCultureIgnoreCase))
