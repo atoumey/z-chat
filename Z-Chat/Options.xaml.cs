@@ -12,6 +12,7 @@ using Microsoft.Scripting;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
+using System.Windows.Input;
 
 namespace ZChat
 {
@@ -32,6 +33,8 @@ namespace ZChat
 
             Icon = BitmapFrame.Create(Assembly.GetExecutingAssembly().GetManifestResourceStream("ZChat.IRC.ico"));
             ZChat = parent;
+
+            EntryHistory.Add("");
 
             _pythonScope = ZChat.PythonEngine.CreateScope();
             ZChat.PythonEngine.Runtime.IO.SetOutput(_pythonOutput, Encoding.UTF8);
@@ -239,49 +242,108 @@ namespace ZChat
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        public int NextHistoricalEntry;
+        public List<string> EntryHistory = new List<string>();
+
+        StringBuilder input = new StringBuilder(255);
         private void consoleInput_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == System.Windows.Input.Key.Enter)
             {
-                e.Handled = true;
-                consoleOutput.AppendText(">> " + consoleInput.Text + Environment.NewLine);
-
-                try
+                if (!string.IsNullOrEmpty(consoleInput.Text))
                 {
-                    ScriptSource source = ZChat.PythonEngine.CreateScriptSourceFromString(consoleInput.Text,
-                        SourceCodeKind.InteractiveCode);
-                    
-                    object o = source.Execute(_pythonScope);
-
-                    int length = (int)_pythonOutput.Length;
-                    if (length > 0)
+                    NextHistoricalEntry = 1;
+                    if (EntryHistory.Count == 100)
                     {
-                        Byte[] bytes = new Byte[length];
-
-                        _pythonOutput.Seek(0, SeekOrigin.Begin);
-                        _pythonOutput.Read(bytes, 0, length);
-
-                        consoleOutput.AppendText(Encoding.UTF8.GetString(bytes, 0, length));
-                        _pythonOutput.SetLength(0);
+                        EntryHistory.RemoveAt(EntryHistory.Count - 1);
                     }
-                    else
-                        consoleOutput.AppendText(o.ToString() + Environment.NewLine);
+                    EntryHistory.Insert(1, consoleInput.Text);
                 }
-                catch (Exception ex)
+
+                e.Handled = true;
+                //consoleOutput.AppendText(">> " + consoleInput.Text + Environment.NewLine);
+
+                input.Append(consoleInput.Text);
+                if (run(input.ToString()))
                 {
-                    consoleOutput.AppendText(ex.Message + Environment.NewLine);
+                    input.AppendLine();
+                    consolePromptLabel.Text = "...";
                 }
+                else
+                {
+                    input.Length = 0;
+                    consolePromptLabel.Text = ">>>";
+                }
+
+                //try
+                //{
+                //    ScriptSource source = ZChat.PythonEngine.CreateScriptSourceFromString(consoleInput.Text,
+                //        SourceCodeKind.InteractiveCode);
+                    
+                //    object o = source.Execute(_pythonScope);
+
+                //    int length = (int)_pythonOutput.Length;
+                //    if (length > 0)
+                //    {
+                //        Byte[] bytes = new Byte[length];
+
+                //        _pythonOutput.Seek(0, SeekOrigin.Begin);
+                //        _pythonOutput.Read(bytes, 0, length);
+
+                //        consoleOutput.AppendText(Encoding.UTF8.GetString(bytes, 0, length));
+                //        _pythonOutput.SetLength(0);
+                //    }
+                //    else
+                //        consoleOutput.AppendText(o.ToString() + Environment.NewLine);
+                //}
+                //catch (Exception ex)
+                //{
+                //    consoleOutput.AppendText(ex.Message + Environment.NewLine);
+                //}
 
                 consoleOutput.ScrollToEnd();
                 consoleInput.Clear();
             }
+            else if (e.Key == Key.Up)
+            {
+                consoleInput.Text = EntryHistory[NextHistoricalEntry];
+                consoleInput.CaretIndex = consoleInput.Text.Length;
+                NextHistoricalEntry++;
+                if (NextHistoricalEntry == EntryHistory.Count)
+                    NextHistoricalEntry = 0;
+            }
+            else if (e.Key == Key.Down)
+            {
+                NextHistoricalEntry--;
+                if (NextHistoricalEntry == -1)
+                    NextHistoricalEntry = EntryHistory.Count - 1;
+                if (NextHistoricalEntry == 0)
+                    consoleInput.Text = EntryHistory[EntryHistory.Count - 1];
+                else
+                    consoleInput.Text = EntryHistory[NextHistoricalEntry - 1];
+            }
         }
 
-        bool allow_incomplete(List<string> lines)
+        void writePythonOutputToScreen()
         {
-            if (string.IsNullOrEmpty(lines[lines.Count-1]))
+            int length = (int)_pythonOutput.Length;
+            if (length > 0)
             {
-                lines[lines.Count-1] = "";
+                byte[] bytes = new byte[length];
+
+                _pythonOutput.Seek(0, SeekOrigin.Begin);
+                _pythonOutput.Read(bytes, 0, length);
+
+                consoleOutput.AppendText(Encoding.UTF8.GetString(bytes, 0, length));
+                _pythonOutput.SetLength(0);
+            }
+        }
+
+        bool allow_incomplete(string[] lines)
+        {
+            if (string.IsNullOrEmpty(lines[lines.Length -1]))
+            {
+                lines[lines.Length-1] = "";
                 return true;
             }
             return false;
@@ -289,7 +351,7 @@ namespace ZChat
         
         bool is_complete(string code, bool allow_incomplete)
         {
-            ScriptSource cmd = ZChat.PythonEngine.CreateScriptSourceFromString(code + '\n', SourceCodeKind.InteractiveCode);
+            ScriptSource cmd = ZChat.PythonEngine.CreateScriptSourceFromString(code + Environment.NewLine, SourceCodeKind.InteractiveCode);
             ScriptCodeParseResult props = cmd.GetCodeProperties(ZChat.PythonEngine.GetCompilerOptions());
             if (SourceCodePropertiesUtils.IsCompleteOrInvalid(props, allow_incomplete))
                 return props != ScriptCodeParseResult.Empty;
@@ -297,79 +359,122 @@ namespace ZChat
                 return false;
         }
             
-        void write_input(List<string> lines)
+        void write_input(string[] lines)
         {
-            consoleOutput.AppendText(">>" + lines[0] + '\n');
-            //self.history.append(lines[0].lstrip())
-            for (int ii=1; ii<lines.Count; ii++)
+            if (lines.Length == 1)
+                consoleOutput.AppendText(">>>" + lines[0] + Environment.NewLine);
+            else
             {
-                consoleOutput.AppendText(".." + lines[ii] + '\n');
-                //self.history.append(line.lstrip())
+                consoleOutput.AppendText("..." + lines[lines.Length - 1] + Environment.NewLine);
             }
         }
 
-        void run(string code)
+        bool run(string code)
         {
-            string[] lines = code.Split(Environment.NewLine, StringSplitOptions.None);
-            if not lines:
-                self.strm.write(sys.ps1 + '\n')
-                return
-            
-            if self.is_complete(code, self.allow_incomplete(lines)):
-                self.write_input(lines)
-                
-                args = (code, len(lines) > 1)
-                if self.background_execution:
-                    ThreadPool.QueueUserWorkItem(self._run, args)
-                else:
-                    self._run(args)
-                
-                return False
-            else:
-                return True
+            if (string.IsNullOrEmpty(code))
+            {
+                consoleOutput.AppendText(">>>" + Environment.NewLine);
+                return false;
+            }
+
+            string[] lines = code.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+
+            if (is_complete(code, allow_incomplete(lines)))
+            {
+                write_input(lines);
+                _run(code, lines.Length > 1);
+                return false;
+            }
+            else
+            {
+                write_input(lines);
+                return true;
+            }
         }
    
-        def _run(self, args):
-            code, multiline = args
-            try:
-                if multiline:
-                    self.run_multiline(code)
-                else:
-                    self.run_singleline(code)
-            except:
-                self.handle_exception(sys.exc_info()[1])    
+        void _run(string code, bool multiline)
+        {
+            try
+            {
+                if (multiline)
+                    run_multiline(code);
+                else
+                    run_singleline(code);
+            }
+            catch (Exception e)
+            {
+                handle_exception(e);
+            }
+        }
+   
+        void run_singleline(string code)
+        {
+            object returnVal = null;
+
+            try
+            {
+                ScriptSource src = ZChat.PythonEngine.CreateScriptSourceFromString(code, SourceCodeKind.InteractiveCode);
+                returnVal = src.Execute(_pythonScope);
+                writePythonOutputToScreen();
+                //ret = eval(code, self.namespace);
+            }
+            catch (SyntaxErrorException syn)
+            {
+                run_multiline(code);
+            }
+            finally
+            {
+                if (returnVal != null)
+                {
+                    consoleOutput.AppendText(returnVal.ToString() + Environment.NewLine);
+                    if (Dispatcher.CheckAccess())
+                    {
+                        _pythonScope.SetVariable("_", returnVal);
+                        //self.namespace['_'] = ret;
+                    }
+                }
+            }
+        }
+
+        void run_multiline(string code)
+        {
+            ScriptSource src = ZChat.PythonEngine.CreateScriptSourceFromString(code, SourceCodeKind.InteractiveCode);
+            src.Execute(_pythonScope);
+            writePythonOutputToScreen();
+            //exec code in self.namespace;
+        }
             
-        def run_singleline(self, code):
-            try:
-                ret = eval(code, self.namespace)
-            except SyntaxError:
-                self.run_multiline(code)
-            else:
-                if ret is not None:
-                    self.strm.write(repr(ret) + '\n')
-                    if wpf.Dispatcher.CheckAccess():
-                        self.namespace['_'] = ret
+        void handle_exception(Exception e)
+        {
+            print_exception(e);
+        }
+            
+        void print_exception(Exception clsException)
+        {
+            ExceptionOperations exc_service = ZChat.PythonEngine.GetService<ExceptionOperations>();
      
-        def run_multiline(self, code):
-            exec code in self.namespace
-            
-        def handle_exception(self, e):
-            self.print_exception(e.clsException)
-            
-        def print_exception(self, clsException):
-            exc_service = self.Engine.GetService[ExceptionOperations]()
-     
-            traceback = exc_service.FormatException(clsException)        
+            string traceback = exc_service.FormatException(clsException);        
            
-            lines = [line for line in traceback.splitlines() if 'in <string>' not in line and 'silvershell\\' not in line]
-            if len(lines) == 2:
-                lines = lines[1:]       
+            List<string> linesToLookAt = new List<string>();
+            foreach (string line in traceback.Split(new string[]{Environment.NewLine}, StringSplitOptions.None))
+            {
+                if (!line.Contains("in <string>") && !line.Contains("zchat\\"))
+                    linesToLookAt.Add(line);
+            }
+            if (linesToLookAt.Count == 2)
+                linesToLookAt.RemoveAt(0);
+            //lines = [line for line in traceback.splitlines() if 'in <string>' not in line and 'silvershell\\' not in line]
+            //if len(lines) == 2:
+            //    lines = lines[1:]       
             
-            sys.stderr.write('\n'.join(lines))
-            if Preferences.ExceptionDetail:
-                sys.stderr.write('\nCLR Exception: ')
-                sys.stderr.write(clsException.ToString())
+            consoleOutput.AppendText(string.Join(Environment.NewLine, linesToLookAt.ToArray()));
+            //if (Preferences.ExceptionDetail)
+            //{
+            //    consoleOutput.AppendText(Environment.NewLine + "CLR Exception: ");
+            //    consoleOutput.AppendText(clsException.ToString());
+            //}
             
-            sys.stderr.write('\n')
+            consoleOutput.AppendText(Environment.NewLine);
+        }
     }
 }

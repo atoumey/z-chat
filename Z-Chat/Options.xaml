@@ -199,8 +199,15 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBox Grid.Row="0" Name="consoleOutput" IsReadOnly="True" VerticalContentAlignment="Bottom"
-                         HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" />
-                <TextBox Grid.Row="1" Name="consoleInput" AcceptsTab="True" KeyUp="consoleInput_KeyUp" />
+                         HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" FontFamily="Courier New" />
+                <Grid Grid.Row="1" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Name="consolePromptLabel" Margin="2">>>></TextBlock>
+                    <TextBox Grid.Column="1" Name="consoleInput" AcceptsTab="True" KeyUp="consoleInput_KeyUp" HorizontalAlignment="Stretch" FontFamily="Courier New" />
+                </Grid>
             </Grid>
             </Grid>
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
