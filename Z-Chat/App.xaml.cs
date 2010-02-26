@@ -292,7 +292,7 @@ namespace ZChat
         {
             if (string.IsNullOrEmpty(nick))
                 MainOutputWindow.TakeIncomingQueryMessage(e);
-            else if (!queryWindows.Any<PrivMsg>(delegate(PrivMsg msg) { return msg.QueriedUser == nick.ToLower(); }))
+            else if (!queryWindows.Any<PrivMsg>(delegate(PrivMsg msg) { return msg.QueriedUser.ToLower() == nick.ToLower(); }))
             {
                 if (WindowsForPrivMsgs)
                     Dispatcher.Invoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, e); }));
