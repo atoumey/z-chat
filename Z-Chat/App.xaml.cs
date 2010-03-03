@@ -86,6 +86,8 @@ namespace ZChat
 
         List<string> rawMessages = new List<string>();
 
+        PythonConsole pythonConsole;
+
         public App()
         {
             System.Windows.Controls.MenuItem item = new System.Windows.Controls.MenuItem();
@@ -157,10 +159,13 @@ namespace ZChat
             PythonEngine = Python.CreateEngine(options);
 
             ScriptRuntime runtime = PythonEngine.Runtime;
-            runtime.LoadAssembly(Assembly.GetExecutingAssembly());
+            runtime.LoadAssembly(GetType().Assembly);
             runtime.LoadAssembly(typeof(String).Assembly);
             runtime.LoadAssembly(typeof(Uri).Assembly);
             runtime.LoadAssembly(typeof(Brushes).Assembly);
+
+            pythonConsole = new PythonConsole(this);
+            PythonEngine.Runtime.IO.SetOutput(new MemoryStream(), new TextBoxWriter(pythonConsole.PythonOutput));
 
             string pluginsDir = Path.Combine(Environment.CurrentDirectory, "scripts");
             if (Directory.Exists(pluginsDir))
@@ -728,6 +733,10 @@ namespace ZChat
                     else
                         sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
                                       new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/join <channelName>'.  Names may not contain spaces.") });
+                }
+                else if (input.Equals("/pyc"))
+                {
+                    pythonConsole.Show();
                 }
                 else if (input.StartsWith("/"))
                 {
