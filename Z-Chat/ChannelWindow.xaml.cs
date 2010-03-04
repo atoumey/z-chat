@@ -54,7 +54,7 @@ namespace ZChat
 
         public ChannelWindow() { }
 
-        public ChannelWindow(App app) : base(app)
+        public ChannelWindow(Chat zchat) : base(zchat)
         {
             WindowIconName_NoActivity = "ZChat.IRC.ico";
             WindowIconName_Activity = "ZChat.IRCgreen.ico";

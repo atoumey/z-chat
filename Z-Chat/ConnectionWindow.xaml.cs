@@ -14,13 +14,13 @@ namespace ZChat
         public int ServerPort;
         public string ChannelKey;
 
-        public ConnectionWindow(App app)
+        public ConnectionWindow(Chat zchat)
         {
-            Channel = app.FirstChannel;
-            Nickname = app.InitialNickname;
-            Server = app.Server;
-            ServerPort = app.ServerPort;
-            ChannelKey = app.FirstChannelKey;
+            Channel = zchat.FirstChannel;
+            Nickname = zchat.InitialNickname;
+            Server = zchat.Server;
+            ServerPort = zchat.ServerPort;
+            ChannelKey = zchat.FirstChannelKey;
 
             InitializeComponent();
             WindowStartupLocation = WindowStartupLocation.CenterOwner;

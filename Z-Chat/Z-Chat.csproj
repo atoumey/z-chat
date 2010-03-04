@@ -120,6 +120,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="ChannelWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ConnectionWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -136,10 +140,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ChannelWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="PythonConsole.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -148,13 +148,12 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="ChannelWindow.xaml.cs">
-      <DependentUpon>ChannelWindow.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActivityWindow.cs" />
+    <Compile Include="ChannelWindow.xaml.cs">
+      <DependentUpon>ChannelWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ChatWindow.cs" />
     <Compile Include="ConnectionWindow.xaml.cs">
       <DependentUpon>ConnectionWindow.xaml</DependentUpon>
@@ -186,6 +185,7 @@
       <DependentUpon>PythonConsole.xaml</DependentUpon>
     </Compile>
     <Compile Include="TextBoxWriter.cs" />
+    <Compile Include="ZChat.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

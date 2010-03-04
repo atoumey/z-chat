@@ -23,7 +23,7 @@ namespace ZChat
 
         private WindowState storedWindowState = WindowState.Normal;
 
-        protected App ZChat { get; set; }
+        protected Chat ZChat { get; set; }
 
         /// <summary>
         /// Change either the window icon or the tray icon to show activity, depending on 
@@ -97,9 +97,9 @@ namespace ZChat
 
         public ActivityWindow() { }
 
-        public ActivityWindow(App app)
+        public ActivityWindow(Chat zchat)
         {
-            ZChat = app;
+            ZChat = zchat;
             ZChat.PropertyChanged += ZChat_PropertyChanged;
 
             notifyIcon = new System.Windows.Forms.NotifyIcon();

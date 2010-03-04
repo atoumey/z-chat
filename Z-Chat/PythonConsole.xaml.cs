@@ -22,14 +22,14 @@ namespace ZChat
     /// </summary>
     public partial class PythonConsole : Window, INotifyPropertyChanged
     {
-        public App ZChat { get { return _zchat; } set { _zchat = value; FirePropertyChanged("ZChat"); } }
-        private App _zchat;
+        public Chat ZChat { get { return _zchat; } set { _zchat = value; FirePropertyChanged("ZChat"); } }
+        private Chat _zchat;
 
         private ScriptScope _pythonScope;
         
         public TextBox PythonOutput { get { return consoleOutput; } }
 
-        public PythonConsole(App zchat)
+        public PythonConsole(Chat zchat)
         {
             InitializeComponent();
             Closing += new CancelEventHandler(PythonConsole_Closing);

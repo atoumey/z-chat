@@ -17,8 +17,8 @@ namespace ZChat
         /// <param name="app"></param>
         /// <param name="queriedUserName"></param>
         /// <param name="firstMessage">The IrcEventArgs that were received with the incoming message.</param>
-        public PrivMsg(App app, string queriedUserName, IrcEventArgs firstMessage)
-            : this(app, queriedUserName)
+        public PrivMsg(Chat zchat, string queriedUserName, IrcEventArgs firstMessage)
+            : this(zchat, queriedUserName)
         {
             if (firstMessage.Data.Type == ReceiveType.QueryNotice)
                 IRC_OnQueryNotice(this, firstMessage);
@@ -34,13 +34,13 @@ namespace ZChat
         /// <param name="app"></param>
         /// <param name="queriedUserName"></param>
         /// <param name="firstMessage">The initial message to send to the other user.</param>
-        public PrivMsg(App app, string queriedUserName, string firstMessage)
-            : this(app, queriedUserName)
+        public PrivMsg(Chat zchat, string queriedUserName, string firstMessage)
+            : this(zchat, queriedUserName)
         {
             SendMessage(firstMessage);
         }
 
-        protected PrivMsg(App app, string queriedUserName) : base(app)
+        protected PrivMsg(Chat zchat, string queriedUserName) : base(zchat)
         {
             WindowIconName_NoActivity = "ZChat.IRC.ico";
             WindowIconName_Activity = "ZChat.IRCgreen.ico";

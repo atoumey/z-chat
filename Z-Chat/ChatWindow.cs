@@ -65,7 +65,7 @@ namespace ZChat
 
         public ChatWindow() { }
 
-        public ChatWindow(App app) : base(app)
+        public ChatWindow(Chat zchat) : base(zchat)
         {
             ZChat.PropertyChanged += ZChat_PropertyChanged;
 

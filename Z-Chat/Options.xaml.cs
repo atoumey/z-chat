@@ -21,10 +21,10 @@ namespace ZChat
     /// </summary>
     public partial class Options : Window, INotifyPropertyChanged
     {
-        public App ZChat { get { return _zchat; } set { _zchat = value; FirePropertyChanged("ZChat"); } }
-        private App _zchat;
+        public Chat ZChat { get { return _zchat; } set { _zchat = value; FirePropertyChanged("ZChat"); } }
+        private Chat _zchat;
 
-        public Options(App parent) : base()
+        public Options(Chat parent) : base()
         {
             InitializeComponent();
 

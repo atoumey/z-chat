@@ -21,7 +21,7 @@ namespace ZChat
         /// <summary>
         /// Use the App object to subscribe to events
         /// </summary>
-        public virtual void Initialize(App app)
+        public virtual void Initialize(Chat zchat)
         {
             return;
         }
