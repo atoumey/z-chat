@@ -342,13 +342,14 @@ namespace ZChat
 
         public void SendQueryMessage(string nick, string message)
         {
-            PrivMsg match = queryWindows.Single<PrivMsg>(delegate(PrivMsg chan) { return chan.QueriedUser == nick.ToLower(); });
+            PrivMsg match = queryWindows.SingleOrDefault<PrivMsg>(delegate(PrivMsg chan) { return chan.QueriedUser == nick.ToLower(); });
             if (match != null)
                 match.TakeOutgoingMessage(message);
             else if (WindowsForPrivMsgs)
                 Application.Current.Dispatcher.BeginInvoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, message); }));
             else
                 MainOutputWindow.TakeOutgoingQueryMessage(nick, message);
+        
         }
         #endregion
 
@@ -360,7 +361,13 @@ namespace ZChat
 
         void Window_Closed(object sender, EventArgs e)
         {
-            if (Application.Current.Windows.Count == 0)
+            ShutdownIfReady();
+        }
+
+        public void ShutdownIfReady()
+        {
+            if (Application.Current.Windows.Count == 0 ||
+                (Application.Current.Windows.Count == 1 && !pythonConsole.IsVisible)) //python console is the only window left
             {
                 if (IRC.IsConnected)
                     IRC.Disconnect();

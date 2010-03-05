@@ -45,6 +45,7 @@ namespace ZChat
         {
             e.Cancel = true;
             Hide();
+            ZChat.ShutdownIfReady();
         }
 
         public int NextHistoricalEntry;
