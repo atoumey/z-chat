@@ -69,7 +69,7 @@ namespace ZChat
         {
             ZChat.PropertyChanged += ZChat_PropertyChanged;
 
-            HyperlinkRegex = new Regex(ZChat.HyperlinkPattern, RegexOptions.Compiled);
+            HyperlinkRegex = new Regex(ZChat.Options.HyperlinkPattern, RegexOptions.Compiled);
             EntryHistory.Add("");
 
             Loaded += ChatWindow_Loaded;
@@ -79,17 +79,17 @@ namespace ZChat
         void ZChat_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "EntryBack")
-                InputBox.Background = ZChat.EntryBack;
+                InputBox.Background = ZChat.Options.EntryBack;
             if (e.PropertyName == "EntryFore")
-                InputBox.Foreground = ZChat.EntryFore;
+                InputBox.Foreground = ZChat.Options.EntryFore;
             if (e.PropertyName == "ChatBack")
-                Document.Background = ZChat.ChatBack;
+                Document.Background = ZChat.Options.ChatBack;
             if (e.PropertyName == "HyperlinkPattern")
-                HyperlinkRegex = new Regex(ZChat.HyperlinkPattern, RegexOptions.Compiled);
+                HyperlinkRegex = new Regex(ZChat.Options.HyperlinkPattern, RegexOptions.Compiled);
             if (e.PropertyName == "Font")
             {
-                InputBox.FontFamily = ZChat.Font;
-                Document.FontFamily = ZChat.Font;
+                InputBox.FontFamily = ZChat.Options.Font;
+                Document.FontFamily = ZChat.Options.Font;
             }
         }
 
@@ -100,11 +100,11 @@ namespace ZChat
 
         private void ChatWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            InputBox.Background = ZChat.EntryBack;
-            InputBox.Foreground = ZChat.EntryFore;
-            Document.Background = ZChat.ChatBack;
-            InputBox.FontFamily = ZChat.Font;
-            Document.FontFamily = ZChat.Font;
+            InputBox.Background = ZChat.Options.EntryBack;
+            InputBox.Foreground = ZChat.Options.EntryFore;
+            Document.Background = ZChat.Options.ChatBack;
+            InputBox.FontFamily = ZChat.Options.Font;
+            Document.FontFamily = ZChat.Options.Font;
 
             InputBox.Focus();
         }
@@ -240,7 +240,7 @@ namespace ZChat
                 Document.Blocks.Remove(Document.Blocks.FirstBlock);
 
             string timeStamp;
-            timeStamp = DateTime.Now.ToString(ZChat.TimeStampFormat);
+            timeStamp = DateTime.Now.ToString(ZChat.Options.TimeStampFormat);
             TimeSourceTextGroup group = new TimeSourceTextGroup(timeStamp, sourcePairs, textPairs);
 
             Dispatcher.BeginInvoke(new VoidDelegate(delegate
@@ -269,12 +269,12 @@ namespace ZChat
 
             Span timeSourceSpan = new Span();
             Run timeRun = new Run(group.Time);
-            timeRun.Foreground = ZChat.TimeFore;
+            timeRun.Foreground = ZChat.Options.TimeFore;
             p.Inlines.Add(timeRun);
 
             ColorTextPair[] allPairs = new ColorTextPair[group.Source.Length + 1 + group.Text.Length];
             for (int ii = 0; ii < group.Source.Length; ii++) allPairs[ii] = group.Source[ii];
-            allPairs[group.Source.Length] = new ColorTextPair(ZChat.TextFore, " ");
+            allPairs[group.Source.Length] = new ColorTextPair(ZChat.Options.TextFore, " ");
             for (int ii = 0; ii < group.Text.Length; ii++) allPairs[ii + group.Source.Length + 1] = group.Text[ii];
 
             AddInlines(p.Inlines, allPairs, true);
@@ -299,7 +299,7 @@ namespace ZChat
                 {
                     if (!string.IsNullOrEmpty(pair.Text))
                     {
-                        MatchCollection matches = new Regex(ZChat.HyperlinkPattern).Matches(pair.Text);
+                        MatchCollection matches = new Regex(ZChat.Options.HyperlinkPattern).Matches(pair.Text);
                         if (matches.Count > 0)
                         {
                             hasHyperlinks = true;
@@ -321,7 +321,7 @@ namespace ZChat
                                 linkText = pair.Text.Substring(linkStart, linkLength);
 
                                 Hyperlink link = new Hyperlink(new Run(linkText));
-                                link.Foreground = ZChat.LinkFore;
+                                link.Foreground = ZChat.Options.LinkFore;
                                 link.SetValue(KeyboardNavigation.IsTabStopProperty, false);
                                 //if (link.FontStyle) link.TextDecorations.Add(TextDecorations.Underline);
                                 link.Click += new RoutedEventHandler(link_Click);

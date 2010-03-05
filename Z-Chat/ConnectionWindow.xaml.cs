@@ -16,11 +16,11 @@ namespace ZChat
 
         public ConnectionWindow(Chat zchat)
         {
-            Channel = zchat.FirstChannel;
-            Nickname = zchat.InitialNickname;
-            Server = zchat.Server;
-            ServerPort = zchat.ServerPort;
-            ChannelKey = zchat.FirstChannelKey;
+            Channel = zchat.Options.FirstChannel;
+            Nickname = zchat.Options.InitialNickname;
+            Server = zchat.Options.Server;
+            ServerPort = zchat.Options.ServerPort;
+            ChannelKey = zchat.Options.FirstChannelKey;
 
             InitializeComponent();
             WindowStartupLocation = WindowStartupLocation.CenterOwner;

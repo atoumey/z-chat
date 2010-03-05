@@ -45,43 +45,7 @@ namespace ZChat
         public ObservableCollection<PrivMsg> queryWindows = new ObservableCollection<PrivMsg>();
         public ObservableCollection<ChannelWindow> channelWindows = new ObservableCollection<ChannelWindow>();
 
-        #region Options
-        public string FirstChannel;
-        public string FirstChannelKey;
-        public string InitialNickname;
-        public string Server;
-        public int ServerPort;
-        public bool SaveConnectionInfo = true;
-        public SolidColorBrush EntryBack { get { return _entryBack; } set { _entryBack = value; FirePropertyChanged("EntryBack"); } }
-        private SolidColorBrush _entryBack = Brushes.White;
-        public SolidColorBrush EntryFore { get { return _entryFore; } set { _entryFore = value; FirePropertyChanged("EntryFore"); } }
-        private SolidColorBrush _entryFore = Brushes.Black;
-        public SolidColorBrush ChatBack { get { return _chatBack; } set { _chatBack = value; FirePropertyChanged("ChatBack"); } }
-        private SolidColorBrush _chatBack = Brushes.White;
-        public SolidColorBrush TimeFore = Brushes.Black;
-        public SolidColorBrush NickFore = Brushes.Black;
-        public SolidColorBrush BracketFore = Brushes.Black;
-        public SolidColorBrush TextFore { get { return _textFore; } set { _textFore = value; FirePropertyChanged("TextFore"); } }
-        public SolidColorBrush _textFore = Brushes.Black;
-        public SolidColorBrush QueryTextFore = Brushes.Maroon;
-        public SolidColorBrush OwnNickFore = Brushes.Green;
-        public SolidColorBrush LinkFore { get { return _linkFore; } set { _linkFore = value; FirePropertyChanged("LinkFore"); } }
-        public SolidColorBrush _linkFore = Brushes.Black;
-        public SolidColorBrush UsersBack { get { return _usersBack; } set { _usersBack = value; FirePropertyChanged("UsersBack"); } }
-        private SolidColorBrush _usersBack = Brushes.White;
-        public SolidColorBrush UsersFore { get { return _usersFore; } set { _usersFore = value; FirePropertyChanged("UsersFore"); } }
-        private SolidColorBrush _usersFore = Brushes.Black;
-        public string TimeStampFormat = "HH:mm:ss ";
-        public ClickRestoreType RestoreType { get { return _restoreType; } set { _restoreType = value; FirePropertyChanged("RestoreType"); } }
-        private ClickRestoreType _restoreType = ClickRestoreType.SingleClick;
-        public bool HighlightTrayIconForJoinsAndQuits = true;
-        public FontFamily Font { get { return _font; } set { _font = value; FirePropertyChanged("Font"); } }
-        private FontFamily _font = new FontFamily("Courier New");
-        public bool WindowsForPrivMsgs = false;
-        public string LastFMUserName = "";
-        public string HyperlinkPattern { get { return _hyperlinkPattern; } set { _hyperlinkPattern = value; FirePropertyChanged("HyperlinkPattern"); } }
-        protected string _hyperlinkPattern = "(^|[ ]|((https?|ftp):\\/\\/))(([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)|localhost|([a-zA-Z0-9\\-]+\\.)*[a-zA-Z0-9\\-]+\\.(com|net|org|info|biz|gov|name|edu|[a-zA-Z][a-zA-Z]))(:[0-9]+)?((\\/|\\?)[^ \"]*[^ ,;\\.:\">)])?\\)?";
-        #endregion
+        public ChatOptions Options { get; set; }
 
         List<string> rawMessages = new List<string>();
 
@@ -89,10 +53,7 @@ namespace ZChat
 
         public Chat()
         {
-            System.Windows.Controls.MenuItem item = new System.Windows.Controls.MenuItem();
-            item.InputGestureText = "Ctrl+C";
-            item.Command = ApplicationCommands.SelectAll;
-            item.Header = "Copy";
+            Options = new ChatOptions();
 
             Application.Current.DispatcherUnhandledException += new System.Windows.Threading.DispatcherUnhandledExceptionEventHandler(UnhandledException);
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomainUnhandledException);
@@ -106,13 +67,13 @@ namespace ZChat
             LoadConfigurationFile();
 
             bool proceed = true;
-            if (FirstChannel == null || InitialNickname == null || Server == null)
+            if (Options.FirstChannel == null || Options.InitialNickname == null || Options.Server == null)
             {
-                if (FirstChannel == null) FirstChannel = FIRST_CHANNEL;
-                if (FirstChannelKey == null) FirstChannelKey = FIRST_CHANNEL_KEY;
-                if (InitialNickname == null) InitialNickname = Environment.UserName;
-                if (Server == null) Server = SERVER_ADDRESS;
-                if (ServerPort == 0) ServerPort = SERVER_PORT;
+                if (Options.FirstChannel == null) Options.FirstChannel = FIRST_CHANNEL;
+                if (Options.FirstChannelKey == null) Options.FirstChannelKey = FIRST_CHANNEL_KEY;
+                if (Options.InitialNickname == null) Options.InitialNickname = Environment.UserName;
+                if (Options.Server == null) Options.Server = SERVER_ADDRESS;
+                if (Options.ServerPort == 0) Options.ServerPort = SERVER_PORT;
                 
                 proceed = ShowConnectionWindow(MainOutputWindow);
             }
@@ -135,14 +96,14 @@ namespace ZChat
                 IRC.OnRawMessage += new IrcEventHandler(IRC_OnRawMessage);
                 IRC.OnWriteLine += new WriteLineEventHandler(IRC_OnWriteLine);
 #endif
-                MainOutputWindow.Channel = FirstChannel;
-                MainOutputWindow.ChannelKey = FirstChannelKey;
+                MainOutputWindow.Channel = Options.FirstChannel;
+                MainOutputWindow.ChannelKey = Options.FirstChannelKey;
 
                 channelWindows.Add(MainOutputWindow);
 
                 LoadScripts();
 
-                IRC.Connect(Server, ServerPort);
+                IRC.Connect(Options.Server, Options.ServerPort);
             }
         }
 
@@ -164,7 +125,9 @@ namespace ZChat
             runtime.LoadAssembly(typeof(Brushes).Assembly);
 
             pythonConsole = new PythonConsole(this);
-            PythonEngine.Runtime.IO.SetOutput(new MemoryStream(), new TextBoxWriter(pythonConsole.PythonOutput));
+            MemoryStream ms = new MemoryStream();
+            PythonEngine.Runtime.IO.SetOutput(ms, new TextBoxWriter(pythonConsole.PythonOutput));
+            PythonEngine.Runtime.IO.SetErrorOutput(ms, new TextBoxWriter(pythonConsole.PythonOutput));
 
             string pluginsDir = Path.Combine(Environment.CurrentDirectory, "scripts");
             if (Directory.Exists(pluginsDir))
@@ -298,7 +261,7 @@ namespace ZChat
                 MainOutputWindow.TakeIncomingQueryMessage(e);
             else if (!queryWindows.Any<PrivMsg>(delegate(PrivMsg msg) { return msg.QueriedUser.ToLower() == nick.ToLower(); }))
             {
-                if (WindowsForPrivMsgs)
+                if (Options.WindowsForPrivMsgs)
                     Application.Current.Dispatcher.Invoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, e); }));
                 else
                     MainOutputWindow.TakeIncomingQueryMessage(e);
@@ -345,7 +308,7 @@ namespace ZChat
             PrivMsg match = queryWindows.SingleOrDefault<PrivMsg>(delegate(PrivMsg chan) { return chan.QueriedUser == nick.ToLower(); });
             if (match != null)
                 match.TakeOutgoingMessage(message);
-            else if (WindowsForPrivMsgs)
+            else if (Options.WindowsForPrivMsgs)
                 Application.Current.Dispatcher.BeginInvoke(new VoidDelegate(delegate { CreateNewPrivWindow(nick, message); }));
             else
                 MainOutputWindow.TakeOutgoingQueryMessage(nick, message);
@@ -355,7 +318,7 @@ namespace ZChat
 
         void IRC_OnConnected(object sender, EventArgs e)
         {
-            IRC.Login(InitialNickname, "Real Name", 0, "username");
+            IRC.Login(Options.InitialNickname, "Real Name", 0, "username");
             new Thread(new ThreadStart(delegate { IRC.Listen(); })).Start();
         }
 
@@ -415,67 +378,67 @@ namespace ZChat
                     }
 
                     if (options.ContainsKey("FirstChannel"))
-                        FirstChannel = options["FirstChannel"];
+                        Options.FirstChannel = options["FirstChannel"];
 
                     if (options.ContainsKey("Nickname"))
-                        InitialNickname = options["Nickname"];
+                        Options.InitialNickname = options["Nickname"];
                     if (options.ContainsKey("Server"))
-                        Server = options["Server"];
+                        Options.Server = options["Server"];
                     if (options.ContainsKey("ServerPort"))
                     {
-                        try { ServerPort = int.Parse(options["ServerPort"]); }
-                        catch { ServerPort = 6667; }
+                        try { Options.ServerPort = int.Parse(options["ServerPort"]); }
+                        catch { Options.ServerPort = 6667; }
                     }
                     if (options.ContainsKey("FirstChannelKey"))
-                        FirstChannelKey = options["FirstChannelKey"];
+                        Options.FirstChannelKey = options["FirstChannelKey"];
 
                     if (options.ContainsKey("SaveConnectionInfo"))
                     {
-                        if (options["SaveConnectionInfo"] == "yes") SaveConnectionInfo = true;
-                        else SaveConnectionInfo = false;
+                        if (options["SaveConnectionInfo"] == "yes") Options.SaveConnectionInfo = true;
+                        else Options.SaveConnectionInfo = false;
                     }
 
                     if (options.ContainsKey("ClickRestoreType"))
                     {
-                        if (options["ClickRestoreType"] == "single") RestoreType = ClickRestoreType.SingleClick;
-                        else RestoreType = ClickRestoreType.DoubleClick;
+                        if (options["ClickRestoreType"] == "single") Options.RestoreType = ClickRestoreType.SingleClick;
+                        else Options.RestoreType = ClickRestoreType.DoubleClick;
                     }
 
                     if (options.ContainsKey("HighlightTrayForJoinQuits"))
                     {
-                        if (options["HighlightTrayForJoinQuits"] == "yes") HighlightTrayIconForJoinsAndQuits = true;
-                        else HighlightTrayIconForJoinsAndQuits = false;
+                        if (options["HighlightTrayForJoinQuits"] == "yes") Options.HighlightTrayIconForJoinsAndQuits = true;
+                        else Options.HighlightTrayIconForJoinsAndQuits = false;
                     }
 
-                    if (options.ContainsKey("UsersBack")) UsersBack = CreateBrushFromString(options["UsersBack"]);
-                    if (options.ContainsKey("UsersFore")) UsersFore = CreateBrushFromString(options["UsersFore"]);
-                    if (options.ContainsKey("EntryBack")) EntryBack = CreateBrushFromString(options["EntryBack"]);
-                    if (options.ContainsKey("EntryFore")) EntryFore = CreateBrushFromString(options["EntryFore"]);
-                    if (options.ContainsKey("ChatBack")) ChatBack = CreateBrushFromString(options["ChatBack"]);
-                    if (options.ContainsKey("TimeFore")) TimeFore = CreateBrushFromString(options["TimeFore"]);
-                    if (options.ContainsKey("NickFore")) NickFore = CreateBrushFromString(options["NickFore"]);
-                    if (options.ContainsKey("BracketFore")) BracketFore = CreateBrushFromString(options["BracketFore"]);
-                    if (options.ContainsKey("TextFore")) TextFore = CreateBrushFromString(options["TextFore"]);
-                    if (options.ContainsKey("OwnNickFore")) OwnNickFore = CreateBrushFromString(options["OwnNickFore"]);
-                    if (options.ContainsKey("LinkFore")) LinkFore = CreateBrushFromString(options["LinkFore"]);
+                    if (options.ContainsKey("UsersBack")) Options.UsersBack = CreateBrushFromString(options["UsersBack"]);
+                    if (options.ContainsKey("UsersFore")) Options.UsersFore = CreateBrushFromString(options["UsersFore"]);
+                    if (options.ContainsKey("EntryBack")) Options.EntryBack = CreateBrushFromString(options["EntryBack"]);
+                    if (options.ContainsKey("EntryFore")) Options.EntryFore = CreateBrushFromString(options["EntryFore"]);
+                    if (options.ContainsKey("ChatBack")) Options.ChatBack = CreateBrushFromString(options["ChatBack"]);
+                    if (options.ContainsKey("TimeFore")) Options.TimeFore = CreateBrushFromString(options["TimeFore"]);
+                    if (options.ContainsKey("NickFore")) Options.NickFore = CreateBrushFromString(options["NickFore"]);
+                    if (options.ContainsKey("BracketFore")) Options.BracketFore = CreateBrushFromString(options["BracketFore"]);
+                    if (options.ContainsKey("TextFore")) Options.TextFore = CreateBrushFromString(options["TextFore"]);
+                    if (options.ContainsKey("OwnNickFore")) Options.OwnNickFore = CreateBrushFromString(options["OwnNickFore"]);
+                    if (options.ContainsKey("LinkFore")) Options.LinkFore = CreateBrushFromString(options["LinkFore"]);
 
                     if (options.ContainsKey("Font"))
-                        Font = new FontFamily(options["Font"]);
+                        Options.Font = new FontFamily(options["Font"]);
 
                     if (options.ContainsKey("TimestampFormat"))
-                        TimeStampFormat = options["TimestampFormat"];
+                        Options.TimeStampFormat = options["TimestampFormat"];
 
                     if (options.ContainsKey("QueryTextFore"))
-                        QueryTextFore = CreateBrushFromString(options["QueryTextFore"]);
+                        Options.QueryTextFore = CreateBrushFromString(options["QueryTextFore"]);
 
                     if (options.ContainsKey("WindowsForPrivMsgs"))
                     {
-                        if (options["WindowsForPrivMsgs"] == "yes") WindowsForPrivMsgs = true;
-                        else WindowsForPrivMsgs = false;
+                        if (options["WindowsForPrivMsgs"] == "yes") Options.WindowsForPrivMsgs = true;
+                        else Options.WindowsForPrivMsgs = false;
                     }
 
                     if (options.ContainsKey("LastFMUserName"))
-                        LastFMUserName = options["LastFMUserName"];
+                        Options.LastFMUserName = options["LastFMUserName"];
                 }
             }
             catch (Exception ex)
@@ -488,33 +451,33 @@ namespace ZChat
         {
             StringBuilder options = new StringBuilder();
 
-            if (SaveConnectionInfo)
+            if (Options.SaveConnectionInfo)
             {
-                options.AppendLine("FirstChannel:" + FirstChannel);
-                options.AppendLine("Nickname:" + InitialNickname);
-                options.AppendLine("Server:" + Server);
-                options.AppendLine("ServerPort:" + ServerPort);
-                options.AppendLine("FirstChannelKey:" + FirstChannelKey);
+                options.AppendLine("FirstChannel:" + Options.FirstChannel);
+                options.AppendLine("Nickname:" + Options.InitialNickname);
+                options.AppendLine("Server:" + Options.Server);
+                options.AppendLine("ServerPort:" + Options.ServerPort);
+                options.AppendLine("FirstChannelKey:" + Options.FirstChannelKey);
             }
-            options.AppendLine("SaveConnectionInfo:" + ((SaveConnectionInfo == true) ? "yes" : "no"));
-            options.AppendLine("ClickRestoreType:" + ((RestoreType == ClickRestoreType.SingleClick) ? "single" : "double"));
-            options.AppendLine("HighlightTrayForJoinQuits:" + ((HighlightTrayIconForJoinsAndQuits == true) ? "yes" : "no"));
-            options.AppendLine("UsersBack:" + UsersBack.Color.ToString());
-            options.AppendLine("UsersFore:" + UsersFore.Color.ToString());
-            options.AppendLine("EntryBack:" + EntryBack.Color.ToString());
-            options.AppendLine("EntryFore:" + EntryFore.Color.ToString());
-            options.AppendLine("ChatBack:" + ChatBack.Color.ToString());
-            options.AppendLine("TimeFore:" + TimeFore.Color.ToString());
-            options.AppendLine("NickFore:" + NickFore.Color.ToString());
-            options.AppendLine("BracketFore:" + BracketFore.Color.ToString());
-            options.AppendLine("TextFore:" + TextFore.Color.ToString());
-            options.AppendLine("QueryTextFore:" + QueryTextFore.Color.ToString());
-            options.AppendLine("OwnNickFore:" + OwnNickFore.Color.ToString());
-            options.AppendLine("LinkFore:" + LinkFore.Color.ToString());
-            options.AppendLine("Font:" + Font.Source);
-            options.AppendLine("TimestampFormat:" + TimeStampFormat);
-            options.AppendLine("WindowsForPrivMsgs:" + ((WindowsForPrivMsgs == true) ? "yes" : "no"));
-            options.AppendLine("LastFMUserName:" + LastFMUserName);
+            options.AppendLine("SaveConnectionInfo:" + ((Options.SaveConnectionInfo == true) ? "yes" : "no"));
+            options.AppendLine("ClickRestoreType:" + ((Options.RestoreType == ClickRestoreType.SingleClick) ? "single" : "double"));
+            options.AppendLine("HighlightTrayForJoinQuits:" + ((Options.HighlightTrayIconForJoinsAndQuits == true) ? "yes" : "no"));
+            options.AppendLine("UsersBack:" + Options.UsersBack.Color.ToString());
+            options.AppendLine("UsersFore:" + Options.UsersFore.Color.ToString());
+            options.AppendLine("EntryBack:" + Options.EntryBack.Color.ToString());
+            options.AppendLine("EntryFore:" + Options.EntryFore.Color.ToString());
+            options.AppendLine("ChatBack:" + Options.ChatBack.Color.ToString());
+            options.AppendLine("TimeFore:" + Options.TimeFore.Color.ToString());
+            options.AppendLine("NickFore:" + Options.NickFore.Color.ToString());
+            options.AppendLine("BracketFore:" + Options.BracketFore.Color.ToString());
+            options.AppendLine("TextFore:" + Options.TextFore.Color.ToString());
+            options.AppendLine("QueryTextFore:" + Options.QueryTextFore.Color.ToString());
+            options.AppendLine("OwnNickFore:" + Options.OwnNickFore.Color.ToString());
+            options.AppendLine("LinkFore:" + Options.LinkFore.Color.ToString());
+            options.AppendLine("Font:" + Options.Font.Source);
+            options.AppendLine("TimestampFormat:" + Options.TimeStampFormat);
+            options.AppendLine("WindowsForPrivMsgs:" + ((Options.WindowsForPrivMsgs == true) ? "yes" : "no"));
+            options.AppendLine("LastFMUserName:" + Options.LastFMUserName);
 
             File.WriteAllText(CONFIG_FILE_NAME, options.ToString());
         }
@@ -526,10 +489,10 @@ namespace ZChat
             connWin.Owner = FirstWindow;
             if (connWin.ShowDialog().Value)
             {
-                FirstChannel = connWin.Channel;
-                InitialNickname = connWin.Nickname;
-                Server = connWin.Server;
-                FirstChannelKey = connWin.ChannelKey;
+                Options.FirstChannel = connWin.Channel;
+                Options.InitialNickname = connWin.Nickname;
+                Options.Server = connWin.Server;
+                Options.FirstChannelKey = connWin.ChannelKey;
             }
             else
             {
@@ -636,17 +599,17 @@ namespace ZChat
                         action = "";
                     IRC.SendMessage(SendType.Action, target, action);
 
-                    sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "* "),
-                                                        new ColorTextPair(TextFore, IRC.Nickname) },
-                                  new ColorTextPair[] { new ColorTextPair(TextFore, action) });
+                    sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "* "),
+                                                        new ColorTextPair(Options.TextFore, IRC.Nickname) },
+                                  new ColorTextPair[] { new ColorTextPair(Options.TextFore, action) });
                 }
                 else if (words[0].Equals("/nick", StringComparison.CurrentCultureIgnoreCase))
                 {
                     if (words.Length == 2)
                         IRC.RfcNick(words[1]);
                     else
-                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                                      new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/me <newName>'.  Names may not contain spaces.") });
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "   Error:") },
+                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, "command syntax is '/me <newName>'.  Names may not contain spaces.") });
                 }
                 else if (words[0].Equals("/op", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -659,15 +622,15 @@ namespace ZChat
                 else if (words[0].Equals("/topic", StringComparison.CurrentCultureIgnoreCase))
                 {
                     if (sender is PrivMsg)
-                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                                      new ColorTextPair[] { new ColorTextPair(TextFore, "Cannot set topic in a private chat") });
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "   Error:") },
+                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, "Cannot set topic in a private chat") });
                     else
                     {
                         if (input.Length >= 8)
                             IRC.RfcTopic(target, input.Substring(7));
                         else
-                            sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                                          new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/topic <new topic>'.") });
+                            sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "   Error:") },
+                                          new ColorTextPair[] { new ColorTextPair(Options.TextFore, "command syntax is '/topic <new topic>'.") });
                     }
                 }
                 else if (words[0].Equals("/raw", StringComparison.CurrentCultureIgnoreCase))
@@ -675,8 +638,8 @@ namespace ZChat
                     if (input.Length >= 6)
                         IRC.WriteLine(input.Substring(5));
                     else
-                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                               new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/raw <raw IRC message>'.") });
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "   Error:") },
+                               new ColorTextPair[] { new ColorTextPair(Options.TextFore, "command syntax is '/raw <raw IRC message>'.") });
                 }
                 else if (words[0].Equals("/msg", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -694,8 +657,8 @@ namespace ZChat
                     else syntaxError = true;
 
                     if (syntaxError)
-                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                                      new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/msg <name> <message>'.") });
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "   Error:") },
+                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, "command syntax is '/msg <name> <message>'.") });
                 }
                 else if (words[0].Equals("/error", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -709,14 +672,14 @@ namespace ZChat
                 }
                 else if (words[0].Equals("/np", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    if (string.IsNullOrEmpty(LastFMUserName))
-                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                                      new ColorTextPair[] { new ColorTextPair(TextFore, "You must choose a Last.fm username on the options dialog.") });
+                    if (string.IsNullOrEmpty(Options.LastFMUserName))
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "!") },
+                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, "You must choose a Last.fm username on the options dialog.") });
                     else
                     {
                         WebClient client = new WebClient() { Encoding = Encoding.UTF8 };
                         client.DownloadStringCompleted += new DownloadStringCompletedEventHandler(LastFMdownloadComplete);
-                        client.DownloadStringAsync(new Uri("http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + LastFMUserName + "&api_key=638e9e076d239d8202be0387769d1da9&limit=1"), sender);
+                        client.DownloadStringAsync(new Uri("http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + Options.LastFMUserName + "&api_key=638e9e076d239d8202be0387769d1da9&limit=1"), sender);
                     }
                 }
                 else if (words[0].Equals("/join", StringComparison.CurrentCultureIgnoreCase))
@@ -737,26 +700,27 @@ namespace ZChat
                     if (!syntaxError)
                         IRC.RfcJoin(channel, channelKey);
                     else
-                        sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                                      new ColorTextPair[] { new ColorTextPair(TextFore, "command syntax is '/join <channelName>'.  Names may not contain spaces.") });
+                        sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "   Error:") },
+                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, "command syntax is '/join <channelName>'.  Names may not contain spaces.") });
                 }
                 else if (input.Equals("/pyc"))
                 {
                     pythonConsole.Show();
+                    pythonConsole.consoleInput.Focus();
                 }
                 else if (input.StartsWith("/"))
                 {
-                    sender.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "   Error:") },
-                                  new ColorTextPair[] { new ColorTextPair(TextFore, "command not recognized.") });
+                    sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "   Error:") },
+                                  new ColorTextPair[] { new ColorTextPair(Options.TextFore, "command not recognized.") });
                 }
                 else if (!string.IsNullOrEmpty(input))
                 {
                     IRC.SendMessage(SendType.Message, target, input);
 
-                    sender.Output(new ColorTextPair[] { new ColorTextPair(BracketFore, "<"),
-                                                        new ColorTextPair(OwnNickFore, IRC.Nickname),
-                                                        new ColorTextPair(BracketFore, ">") },
-                                  new ColorTextPair[] { new ColorTextPair(TextFore, input) });
+                    sender.Output(new ColorTextPair[] { new ColorTextPair(Options.BracketFore, "<"),
+                                                        new ColorTextPair(Options.OwnNickFore, IRC.Nickname),
+                                                        new ColorTextPair(Options.BracketFore, ">") },
+                                  new ColorTextPair[] { new ColorTextPair(Options.TextFore, input) });
                 }
             }
             catch (Exception ex)
@@ -782,25 +746,25 @@ namespace ZChat
                 {
                     if (DateTime.Now.Subtract(track.date).Minutes > 30)
                     {
-                        window.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                                      new ColorTextPair[] { new ColorTextPair(TextFore, "You haven't submitted a song to Last.fm in the last 30 minutes.  Maybe Last.fm submission service is down?") });
+                        window.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "!") },
+                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, "You haven't submitted a song to Last.fm in the last 30 minutes.  Maybe Last.fm submission service is down?") });
                     }
                     else
                     {
                         string action = "is listening to " + track.name + " by " + track.artist;
                         IRC.SendMessage(SendType.Action, target, action);
 
-                        window.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "* "),
-                                                            new ColorTextPair(TextFore, IRC.Nickname) },
-                                      new ColorTextPair[] { new ColorTextPair(TextFore, action) });
+                        window.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "* "),
+                                                            new ColorTextPair(Options.TextFore, IRC.Nickname) },
+                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, action) });
                     }
                     break;
                 }
             }
             catch (Exception ex)
             {
-                window.Output(new ColorTextPair[] { new ColorTextPair(TextFore, "!") },
-                              new ColorTextPair[] { new ColorTextPair(TextFore, ex.Message) });
+                window.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "!") },
+                              new ColorTextPair[] { new ColorTextPair(Options.TextFore, ex.Message) });
             }
         }
     }

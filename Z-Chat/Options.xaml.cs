@@ -38,15 +38,15 @@ namespace ZChat
             DataContext = this;
             generalTreeItem.IsSelected = true;
 
-            channelTextBox.Text = ZChat.FirstChannel;
-            nickNameTextBox.Text = ZChat.InitialNickname;
-            serverTextBox.Text = ZChat.Server;
-            serverPortTextBox.Text = ZChat.ServerPort.ToString();
-            channelKeyTextBox.Text = ZChat.FirstChannelKey;
+            channelTextBox.Text = ZChat.Options.FirstChannel;
+            nickNameTextBox.Text = ZChat.Options.InitialNickname;
+            serverTextBox.Text = ZChat.Options.Server;
+            serverPortTextBox.Text = ZChat.Options.ServerPort.ToString();
+            channelKeyTextBox.Text = ZChat.Options.FirstChannelKey;
 
-            saveConnectionInfoCheckBox.IsChecked = ZChat.SaveConnectionInfo;
+            saveConnectionInfoCheckBox.IsChecked = ZChat.Options.SaveConnectionInfo;
 
-            if (ZChat.RestoreType == ClickRestoreType.SingleClick)
+            if (ZChat.Options.RestoreType == ClickRestoreType.SingleClick)
             {
                 singleClickRestore.IsChecked = true;
                 doubleClickRestore.IsChecked = false;
@@ -57,28 +57,28 @@ namespace ZChat
                 doubleClickRestore.IsChecked = true;
             }
 
-            joinsQuitsHighlight.IsChecked = ZChat.HighlightTrayIconForJoinsAndQuits;
+            joinsQuitsHighlight.IsChecked = ZChat.Options.HighlightTrayIconForJoinsAndQuits;
 
-            UsersBack.Background = ZChat.UsersBack;
-            UsersFore.Background = ZChat.UsersFore;
-            EntryBack.Background = ZChat.EntryBack;
-            EntryFore.Background = ZChat.EntryFore;
-            ChatBack.Background = ZChat.ChatBack;
-            TimeFore.Background = ZChat.TimeFore;
-            NickFore.Background = ZChat.NickFore;
-            BracketFore.Background = ZChat.BracketFore;
-            TextFore.Background = ZChat.TextFore;
-            QueryTextFore.Background = ZChat.QueryTextFore;
-            OwnNickFore.Background = ZChat.OwnNickFore;
-            LinkFore.Background = ZChat.LinkFore;
+            UsersBack.Background = ZChat.Options.UsersBack;
+            UsersFore.Background = ZChat.Options.UsersFore;
+            EntryBack.Background = ZChat.Options.EntryBack;
+            EntryFore.Background = ZChat.Options.EntryFore;
+            ChatBack.Background = ZChat.Options.ChatBack;
+            TimeFore.Background = ZChat.Options.TimeFore;
+            NickFore.Background = ZChat.Options.NickFore;
+            BracketFore.Background = ZChat.Options.BracketFore;
+            TextFore.Background = ZChat.Options.TextFore;
+            QueryTextFore.Background = ZChat.Options.QueryTextFore;
+            OwnNickFore.Background = ZChat.Options.OwnNickFore;
+            LinkFore.Background = ZChat.Options.LinkFore;
 
             fontsCombo.ItemsSource = Fonts.SystemFontFamilies;
-            fontsCombo.SelectedValue = ZChat.Font.Source;
+            fontsCombo.SelectedValue = ZChat.Options.Font.Source;
 
-            timeFormatBox.Text = ZChat.TimeStampFormat;
-            windowsForPrivMsgs.IsChecked = ZChat.WindowsForPrivMsgs;
-            lastfmUserBox.Text = ZChat.LastFMUserName;
-            hyperlinkPatternBox.Text = ZChat.HyperlinkPattern;
+            timeFormatBox.Text = ZChat.Options.TimeStampFormat;
+            windowsForPrivMsgs.IsChecked = ZChat.Options.WindowsForPrivMsgs;
+            lastfmUserBox.Text = ZChat.Options.LastFMUserName;
+            hyperlinkPatternBox.Text = ZChat.Options.HyperlinkPattern;
 
             //foreach (Plugin plugin in ZChat.LoadedScripts)
             //    foreach (Grid pluginGrid in plugin.GetOptionGrids())
@@ -93,41 +93,41 @@ namespace ZChat
 
         private void SaveOptions()
         {
-            ZChat.FirstChannel = channelTextBox.Text;
-            ZChat.InitialNickname = nickNameTextBox.Text;
-            ZChat.Server = serverTextBox.Text;
-            try { ZChat.ServerPort = int.Parse(serverPortTextBox.Text); }
-            catch { serverPortTextBox.Text = ZChat.ServerPort.ToString(); }
-            ZChat.FirstChannelKey = channelKeyTextBox.Text;
+            ZChat.Options.FirstChannel = channelTextBox.Text;
+            ZChat.Options.InitialNickname = nickNameTextBox.Text;
+            ZChat.Options.Server = serverTextBox.Text;
+            try { ZChat.Options.ServerPort = int.Parse(serverPortTextBox.Text); }
+            catch { serverPortTextBox.Text = ZChat.Options.ServerPort.ToString(); }
+            ZChat.Options.FirstChannelKey = channelKeyTextBox.Text;
 
-            ZChat.SaveConnectionInfo = saveConnectionInfoCheckBox.IsChecked.Value;
+            ZChat.Options.SaveConnectionInfo = saveConnectionInfoCheckBox.IsChecked.Value;
 
             if (singleClickRestore.IsChecked.Value)
-                ZChat.RestoreType = ClickRestoreType.SingleClick;
+                ZChat.Options.RestoreType = ClickRestoreType.SingleClick;
             else
-                ZChat.RestoreType = ClickRestoreType.DoubleClick;
+                ZChat.Options.RestoreType = ClickRestoreType.DoubleClick;
 
-            ZChat.HighlightTrayIconForJoinsAndQuits = joinsQuitsHighlight.IsChecked.Value;
+            ZChat.Options.HighlightTrayIconForJoinsAndQuits = joinsQuitsHighlight.IsChecked.Value;
 
-            ZChat.UsersBack = (SolidColorBrush)UsersBack.Background;
-            ZChat.UsersFore = (SolidColorBrush)UsersFore.Background;
-            ZChat.EntryBack = (SolidColorBrush)EntryBack.Background;
-            ZChat.EntryFore = (SolidColorBrush)EntryFore.Background;
-            ZChat.ChatBack = (SolidColorBrush)ChatBack.Background;
-            ZChat.TimeFore = (SolidColorBrush)TimeFore.Background;
-            ZChat.NickFore = (SolidColorBrush)NickFore.Background;
-            ZChat.BracketFore = (SolidColorBrush)BracketFore.Background;
-            ZChat.TextFore = (SolidColorBrush)TextFore.Background;
-            ZChat.QueryTextFore = (SolidColorBrush)QueryTextFore.Background;
-            ZChat.OwnNickFore = (SolidColorBrush)OwnNickFore.Background;
-            ZChat.LinkFore = (SolidColorBrush)LinkFore.Background;
+            ZChat.Options.UsersBack = (SolidColorBrush)UsersBack.Background;
+            ZChat.Options.UsersFore = (SolidColorBrush)UsersFore.Background;
+            ZChat.Options.EntryBack = (SolidColorBrush)EntryBack.Background;
+            ZChat.Options.EntryFore = (SolidColorBrush)EntryFore.Background;
+            ZChat.Options.ChatBack = (SolidColorBrush)ChatBack.Background;
+            ZChat.Options.TimeFore = (SolidColorBrush)TimeFore.Background;
+            ZChat.Options.NickFore = (SolidColorBrush)NickFore.Background;
+            ZChat.Options.BracketFore = (SolidColorBrush)BracketFore.Background;
+            ZChat.Options.TextFore = (SolidColorBrush)TextFore.Background;
+            ZChat.Options.QueryTextFore = (SolidColorBrush)QueryTextFore.Background;
+            ZChat.Options.OwnNickFore = (SolidColorBrush)OwnNickFore.Background;
+            ZChat.Options.LinkFore = (SolidColorBrush)LinkFore.Background;
 
-            ZChat.Font = (FontFamily)fontsCombo.SelectedItem;
+            ZChat.Options.Font = (FontFamily)fontsCombo.SelectedItem;
 
-            ZChat.TimeStampFormat = timeFormatBox.Text;
-            ZChat.WindowsForPrivMsgs = windowsForPrivMsgs.IsChecked.Value;
-            ZChat.LastFMUserName = lastfmUserBox.Text;
-            ZChat.HyperlinkPattern = hyperlinkPatternBox.Text;
+            ZChat.Options.TimeStampFormat = timeFormatBox.Text;
+            ZChat.Options.WindowsForPrivMsgs = windowsForPrivMsgs.IsChecked.Value;
+            ZChat.Options.LastFMUserName = lastfmUserBox.Text;
+            ZChat.Options.HyperlinkPattern = hyperlinkPatternBox.Text;
         }
 
         private void OK_Click(object sender, RoutedEventArgs e)

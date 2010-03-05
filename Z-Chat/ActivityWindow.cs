@@ -114,12 +114,12 @@ namespace ZChat
 
         private void SetRestoreType()
         {
-            if (ZChat.RestoreType == ClickRestoreType.SingleClick)
+            if (ZChat.Options.RestoreType == ClickRestoreType.SingleClick)
             {
                 notifyIcon.DoubleClick -= notifyClickHandler;
                 notifyIcon.Click += notifyClickHandler;
             }
-            else if (ZChat.RestoreType == ClickRestoreType.DoubleClick)
+            else if (ZChat.Options.RestoreType == ClickRestoreType.DoubleClick)
             {
                 notifyIcon.Click -= notifyClickHandler;
                 notifyIcon.DoubleClick += notifyClickHandler;
