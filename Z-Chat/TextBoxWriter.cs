@@ -4,6 +4,7 @@ using System.Text;
 using System.Globalization;
 using System.IO;
 using System.Windows.Controls;
+using ZChat;
 
 [Serializable, ComVisible(true)]
 public class TextBoxWriter : TextWriter
@@ -55,7 +56,10 @@ public class TextBoxWriter : TextWriter
         {
             throw new ObjectDisposedException("The writer is closed.");
         }
-        this._tb.AppendText(value.ToString());
+        _tb.Dispatcher.Invoke(new VoidDelegate(delegate
+        {
+            Chat.AppendAndMaybeScrollToBottom(_tb, value.ToString());
+        }));
     }
 
     public override void Write(string value)
@@ -66,7 +70,10 @@ public class TextBoxWriter : TextWriter
         }
         if (value != null)
         {
-            this._tb.AppendText(value);
+            _tb.Dispatcher.Invoke(new VoidDelegate(delegate
+            {
+                Chat.AppendAndMaybeScrollToBottom(_tb, value);
+            }));
         }
     }
 
@@ -92,7 +99,10 @@ public class TextBoxWriter : TextWriter
         {
             throw new ArgumentException("Invalid offset length.");
         }
-        this._tb.AppendText(new string(buffer, index, count));
+        _tb.Dispatcher.Invoke(new VoidDelegate(delegate
+        {
+            Chat.AppendAndMaybeScrollToBottom(_tb, new string(buffer, index, count));
+        }));
     }
 
     // Properties

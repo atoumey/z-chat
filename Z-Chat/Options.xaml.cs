@@ -217,7 +217,10 @@ namespace ZChat
             if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 string path = ofd.FileName;
-                ZChat.CreatePlugin(path);
+                new Thread(new ThreadStart(delegate
+                {
+                    ZChat.CreatePlugin(path);
+                })).Start();
             }
         }
 

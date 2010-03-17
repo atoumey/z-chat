@@ -54,63 +54,7 @@ namespace ZChat
         StringBuilder input = new StringBuilder(255);
         private void consoleInput_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.Enter)
-            {
-                if (!string.IsNullOrEmpty(consoleInput.Text))
-                {
-                    NextHistoricalEntry = 1;
-                    if (EntryHistory.Count == 100)
-                    {
-                        EntryHistory.RemoveAt(EntryHistory.Count - 1);
-                    }
-                    EntryHistory.Insert(1, consoleInput.Text);
-                }
-
-                e.Handled = true;
-                //consoleOutput.AppendText(">> " + consoleInput.Text + Environment.NewLine);
-
-                input.Append(consoleInput.Text);
-                if (run(input.ToString()))
-                {
-                    input.AppendLine();
-                    consolePromptLabel.Text = "...";
-                }
-                else
-                {
-                    input.Length = 0;
-                    consolePromptLabel.Text = ">>>";
-                }
-
-                //try
-                //{
-                //    ScriptSource source = ZChat.PythonEngine.CreateScriptSourceFromString(consoleInput.Text,
-                //        SourceCodeKind.InteractiveCode);
-
-                //    object o = source.Execute(_pythonScope);
-
-                //    int length = (int)_pythonOutput.Length;
-                //    if (length > 0)
-                //    {
-                //        Byte[] bytes = new Byte[length];
-
-                //        _pythonOutput.Seek(0, SeekOrigin.Begin);
-                //        _pythonOutput.Read(bytes, 0, length);
-
-                //        consoleOutput.AppendText(Encoding.UTF8.GetString(bytes, 0, length));
-                //        _pythonOutput.SetLength(0);
-                //    }
-                //    else
-                //        consoleOutput.AppendText(o.ToString() + Environment.NewLine);
-                //}
-                //catch (Exception ex)
-                //{
-                //    consoleOutput.AppendText(ex.Message + Environment.NewLine);
-                //}
-
-                consoleOutput.ScrollToEnd();
-                consoleInput.Clear();
-            }
-            else if (e.Key == Key.Up)
+            if (e.Key == Key.Up)
             {
                 consoleInput.Text = EntryHistory[NextHistoricalEntry];
                 consoleInput.CaretIndex = consoleInput.Text.Length;
@@ -288,6 +232,77 @@ namespace ZChat
         {
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void Clear_Click(object sender, RoutedEventArgs e)
+        {
+            consoleOutput.Clear();
+        }
+
+        private void ResetScope_Click(object sender, RoutedEventArgs e)
+        {
+            _pythonScope = ZChat.PythonEngine.CreateScope();
+            _pythonScope.SetVariable("zchat", ZChat);
+        }
+
+        private void consoleInput_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                if (!string.IsNullOrEmpty(consoleInput.Text))
+                {
+                    NextHistoricalEntry = 1;
+                    if (EntryHistory.Count == 100)
+                    {
+                        EntryHistory.RemoveAt(EntryHistory.Count - 1);
+                    }
+                    EntryHistory.Insert(1, consoleInput.Text);
+                }
+
+                e.Handled = true;
+                //consoleOutput.AppendText(">> " + consoleInput.Text + Environment.NewLine);
+
+                input.Append(consoleInput.Text);
+                if (run(input.ToString()))
+                {
+                    input.AppendLine();
+                    consolePromptLabel.Text = "...";
+                }
+                else
+                {
+                    input.Length = 0;
+                    consolePromptLabel.Text = ">>>";
+                }
+
+                //try
+                //{
+                //    ScriptSource source = ZChat.PythonEngine.CreateScriptSourceFromString(consoleInput.Text,
+                //        SourceCodeKind.InteractiveCode);
+
+                //    object o = source.Execute(_pythonScope);
+
+                //    int length = (int)_pythonOutput.Length;
+                //    if (length > 0)
+                //    {
+                //        Byte[] bytes = new Byte[length];
+
+                //        _pythonOutput.Seek(0, SeekOrigin.Begin);
+                //        _pythonOutput.Read(bytes, 0, length);
+
+                //        consoleOutput.AppendText(Encoding.UTF8.GetString(bytes, 0, length));
+                //        _pythonOutput.SetLength(0);
+                //    }
+                //    else
+                //        consoleOutput.AppendText(o.ToString() + Environment.NewLine);
+                //}
+                //catch (Exception ex)
+                //{
+                //    consoleOutput.AppendText(ex.Message + Environment.NewLine);
+                //}
+
+                consoleOutput.ScrollToEnd();
+                consoleInput.Clear();
+            }
         }
     }
 }

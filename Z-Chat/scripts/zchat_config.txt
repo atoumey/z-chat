@@ -1,5 +1,5 @@
 FirstChannel:#testo
-Nickname:Alexg
+Nickname:Alex
 Server:irc.mibbit.com
 ServerPort:6667
 FirstChannelKey:
@@ -20,5 +20,5 @@ OwnNickFore:#FF008000
 LinkFore:#FF000000
 Font:Courier New
 TimestampFormat:HH:mm:ss 
-WindowsForPrivMsgs:no
+WindowsForPrivMsgs:yes
 LastFMUserName:

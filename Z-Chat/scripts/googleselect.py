@@ -12,8 +12,8 @@ def info():
 	return "google search", "0.1", "Alex", "Highlight text, right click and choose google"
 
 def googleSearch(menuItem, args):
-	ApplicationCommands.Copy.Execute(None, menuItem.Tag)
-	Process.Start(ProcessStartInfo("http://www.google.com/search?q=" + Clipboard.GetText()))
+	#ApplicationCommands.Copy.Execute(None, menuItem.Tag)
+  Process.Start(ProcessStartInfo("http://www.google.com/search?q=" + menuItem.Tag.Selection.Text))
 	
 def createContextMenu(window):
 	window.Document.ContextMenu = ContextMenu()
@@ -22,7 +22,7 @@ def createContextMenu(window):
 	item = MenuItem()
 	item.Header = "Google"
 	item.Click += googleSearch
-	item.Tag = window.Document
+	item.Tag = window.DocumentScrollViewer
 	items.Add(item)
 	
 	copyItem = MenuItem()
@@ -51,3 +51,6 @@ zchat.queryWindows.CollectionChanged += windowsChanged
 
 for window in zchat.channelWindows:
 	createContextMenu(window)
+  
+for window in zchat.queryWindows:
+  createContextMenu(window)

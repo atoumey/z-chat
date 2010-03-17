@@ -187,7 +187,7 @@
                         </ListView.View>
                     </ListView>
                     <GroupBox Grid.Row="2" Header="Description" Height="75" ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <TextBlock Grid.Row="2" Text="{Binding ElementName=scriptList, Path=SelectedItem.Description}" TextWrapping="Wrap" MaxWidth="300"/>
+                        <TextBlock Grid.Row="2" Text="{Binding ElementName=scriptList, Path=SelectedItem.Description}" TextWrapping="Wrap" MaxWidth="300" HorizontalAlignment="Left" VerticalAlignment="Top" />
                     </GroupBox>
                     <Button Grid.Row="3" Click="LoadScript_Click">Load script...</Button>
                 </Grid>

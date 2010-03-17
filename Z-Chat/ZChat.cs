@@ -767,5 +767,20 @@ namespace ZChat
                               new ColorTextPair[] { new ColorTextPair(Options.TextFore, ex.Message) });
             }
         }
+
+        public static void AppendAndMaybeScrollToBottom(System.Windows.Controls.TextBox box, string text)
+        {
+            double dVer = box.VerticalOffset;
+            double dViewport = box.ViewportHeight;
+            double dExtent = box.ExtentHeight;
+
+            box.AppendText(text);
+
+            if (dVer != 0)
+            {
+                if (dVer + dViewport == dExtent)
+                    box.ScrollToEnd();
+            }
+        }
     }
 }
