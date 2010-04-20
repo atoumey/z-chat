@@ -67,13 +67,19 @@ namespace ZChat
 
         public ChatWindow(Chat zchat) : base(zchat)
         {
-            ZChat.PropertyChanged += ZChat_PropertyChanged;
+            ZChat.Options.PropertyChanged += ZChat_PropertyChanged;
 
             HyperlinkRegex = new Regex(ZChat.Options.HyperlinkPattern, RegexOptions.Compiled);
             EntryHistory.Add("");
 
             Loaded += ChatWindow_Loaded;
             Activated += ChatWindow_Activated;
+            Closed += new EventHandler(ChatWindow_Closed);
+        }
+
+        void ChatWindow_Closed(object sender, EventArgs e)
+        {
+            ZChat.Options.PropertyChanged -= ZChat_PropertyChanged;
         }
 
         void ZChat_PropertyChanged(object sender, PropertyChangedEventArgs e)

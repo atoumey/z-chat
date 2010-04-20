@@ -100,7 +100,7 @@ namespace ZChat
         public ActivityWindow(Chat zchat)
         {
             ZChat = zchat;
-            ZChat.PropertyChanged += ZChat_PropertyChanged;
+            ZChat.Options.PropertyChanged += ZChat_PropertyChanged;
 
             notifyIcon = new System.Windows.Forms.NotifyIcon();
             notifyClickHandler = new EventHandler(notifyIcon_Click);
@@ -136,7 +136,7 @@ namespace ZChat
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            ZChat.PropertyChanged -= ZChat_PropertyChanged;
+            ZChat.Options.PropertyChanged -= ZChat_PropertyChanged;
 
             notifyIcon.Dispose();
             notifyIcon = null;

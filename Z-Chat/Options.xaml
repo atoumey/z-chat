@@ -176,7 +176,13 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Margin="5" MaxWidth="200" HorizontalAlignment="Center"  TextWrapping="Wrap">Any Python scripts in the "scripts" directory will be loaded at startup.</TextBlock>
+                    <TextBlock Grid.Row="0" Margin="5"  HorizontalAlignment="Center"  TextWrapping="Wrap">
+                        <TextBlock.Inlines>
+                            <Run>Any Python scripts in the</Run>
+                            <Hyperlink Click="scriptDir_Click">scripts directory</Hyperlink>
+                            <Run>will be loaded at startup.</Run>
+                        </TextBlock.Inlines>
+                    </TextBlock>
                     <ListView Name="scriptList" Grid.Row="1" ItemsSource="{Binding ZChat.LoadedScripts}">
                         <ListView.View>
                             <GridView>

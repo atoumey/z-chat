@@ -217,10 +217,10 @@ namespace ZChat
             if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 string path = ofd.FileName;
-                new Thread(new ThreadStart(delegate
+                Application.Current.Dispatcher.BeginInvoke(new VoidDelegate(delegate
                 {
                     ZChat.CreatePlugin(path);
-                })).Start();
+                }));
             }
         }
 
@@ -229,6 +229,11 @@ namespace ZChat
         {
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void scriptDir_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start("explorer", Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory) + "\\scripts");
         }
     }
 }

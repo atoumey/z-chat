@@ -61,7 +61,7 @@ namespace ZChat
             TrayIconName_NoActivity = "ZChat.IRC.ico";
             TrayIconName_Activity = "ZChat.IRCgreen.ico";
 
-            ZChat.PropertyChanged += ZChat_PropertyChanged;
+            ZChat.Options.PropertyChanged += ZChat_PropertyChanged;
 
             InitializeComponent();
 
@@ -464,7 +464,7 @@ namespace ZChat
         {
             ZChat.IRC.RfcPart(Channel);
 
-            ZChat.PropertyChanged -= ZChat_PropertyChanged;
+            ZChat.Options.PropertyChanged -= ZChat_PropertyChanged;
 
             ZChat.IRC.OnPart -= irc_OnPart;
             ZChat.IRC.OnQuit -= irc_OnQuit;

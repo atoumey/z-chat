@@ -35,7 +35,7 @@ namespace ZChat
         public SolidColorBrush UsersFore { get { return _usersFore; } set { _usersFore = value; FirePropertyChanged("UsersFore"); } }
         private SolidColorBrush _usersFore = Brushes.Black;
         public string TimeStampFormat = "HH:mm:ss ";
-        public ClickRestoreType RestoreType { get { return _restoreType; } set { _restoreType = value; FirePropertyChanged("RestoreType"); } }
+        public ClickRestoreType RestoreType { get { return _restoreType; } set { if (_restoreType != value) { _restoreType = value; FirePropertyChanged("RestoreType"); } } }
         private ClickRestoreType _restoreType = ClickRestoreType.SingleClick;
         public bool HighlightTrayIconForJoinsAndQuits = true;
         public FontFamily Font { get { return _font; } set { _font = value; FirePropertyChanged("Font"); } }

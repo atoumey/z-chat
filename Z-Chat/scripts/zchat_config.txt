@@ -1,11 +1,11 @@
 FirstChannel:#testo
-Nickname:Alex
+Nickname:Alex2
 Server:irc.mibbit.com
 ServerPort:6667
 FirstChannelKey:
 SaveConnectionInfo:yes
-ClickRestoreType:single
-HighlightTrayForJoinQuits:yes
+ClickRestoreType:double
+HighlightTrayForJoinQuits:no
 UsersBack:#FFFFFFFF
 UsersFore:#FF000000
 EntryBack:#FFFFFFFF

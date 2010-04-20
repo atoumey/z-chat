@@ -47,7 +47,7 @@ namespace ZChat
             TrayIconName_NoActivity = "ZChat.IRC.ico";
             TrayIconName_Activity = "ZChat.IRCgreen.ico";
 
-            ZChat.PropertyChanged += ZChat_PropertyChanged;
+            ZChat.Options.PropertyChanged += ZChat_PropertyChanged;
             ZChat.IRC.OnQueryAction += new ActionEventHandler(IRC_OnQueryAction);
             ZChat.IRC.OnQueryMessage += new IrcEventHandler(IRC_OnQueryMessage);
             ZChat.IRC.OnQueryNotice += new IrcEventHandler(IRC_OnQueryNotice);
@@ -200,7 +200,7 @@ namespace ZChat
 
         private void Window_Closed(object sender, EventArgs e)
         {
-            ZChat.PropertyChanged -= ZChat_PropertyChanged;
+            ZChat.Options.PropertyChanged -= ZChat_PropertyChanged;
             ZChat.IRC.OnQueryAction -= IRC_OnQueryAction;
             ZChat.IRC.OnQueryMessage -= IRC_OnQueryMessage;
             ZChat.IRC.OnQueryNotice -= IRC_OnQueryNotice;
