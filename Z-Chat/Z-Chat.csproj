@@ -230,15 +230,21 @@
     <EmbeddedResource Include="IRCgreen.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="scripts\console output test.py" />
+    <Content Include="scripts\daychanged.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="scripts\googleselect.py">
+    </Content>
+    <Content Include="scripts\log.py">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="scripts\nowplaying.py">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="scripts\test.py">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="scripts\timer test.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
