@@ -164,8 +164,6 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Label Grid.Row="0" Grid.Column="0" Content="Last.fm username"/>
-                    <TextBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Top" Margin="2" Name="lastfmUserBox" Height="20"/>
                     <Label Grid.Row="1" Grid.Column="0" Content="Hyperlink regex"/>
                     <TextBox Grid.Row="1" Grid.Column="1" MaxWidth="200" VerticalAlignment="Top" Margin="2" Name="hyperlinkPatternBox" Height="20"/>
                 </Grid>

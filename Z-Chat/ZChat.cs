@@ -436,9 +436,6 @@ namespace ZChat
                         if (options["WindowsForPrivMsgs"] == "yes") Options.WindowsForPrivMsgs = true;
                         else Options.WindowsForPrivMsgs = false;
                     }
-
-                    if (options.ContainsKey("LastFMUserName"))
-                        Options.LastFMUserName = options["LastFMUserName"];
                 }
             }
             catch (Exception ex)
@@ -477,7 +474,6 @@ namespace ZChat
             options.AppendLine("Font:" + Options.Font.Source);
             options.AppendLine("TimestampFormat:" + Options.TimeStampFormat);
             options.AppendLine("WindowsForPrivMsgs:" + ((Options.WindowsForPrivMsgs == true) ? "yes" : "no"));
-            options.AppendLine("LastFMUserName:" + Options.LastFMUserName);
 
             File.WriteAllText(CONFIG_FILE_NAME, options.ToString());
         }
@@ -673,18 +669,6 @@ namespace ZChat
 
                     throw new Exception(errorText);
                 }
-                else if (words[0].Equals("/np", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    if (string.IsNullOrEmpty(Options.LastFMUserName))
-                        sender.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "!") },
-                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, "You must choose a Last.fm username on the options dialog.") });
-                    else
-                    {
-                        WebClient client = new WebClient() { Encoding = Encoding.UTF8 };
-                        client.DownloadStringCompleted += new DownloadStringCompletedEventHandler(LastFMdownloadComplete);
-                        client.DownloadStringAsync(new Uri("http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=" + Options.LastFMUserName + "&api_key=638e9e076d239d8202be0387769d1da9&limit=1"), sender);
-                    }
-                }
                 else if (words[0].Equals("/join", StringComparison.CurrentCultureIgnoreCase))
                 {
                     bool syntaxError = false;
@@ -737,45 +721,6 @@ namespace ZChat
 
         public event SentMessageHandler OnSentMessage;
         public delegate void SentMessageHandler (SendType type, string target, string message);
-
-        private void LastFMdownloadComplete(object sender, DownloadStringCompletedEventArgs e)
-        {
-            ChatWindow window = e.UserState as ChatWindow;
-
-            try
-            {
-                string target = (window is ChannelWindow) ? (window as ChannelWindow).Channel : (window as PrivMsg).QueriedUser;
-
-                XDocument doc = XDocument.Parse(e.Result);
-
-                var tracks = from results in doc.Descendants("track")
-                             select new { name = results.Element("name").Value, artist = results.Element("artist").Value, date = (DateTime)results.Element("date") };
-
-                foreach (var track in tracks)
-                {
-                    if (DateTime.Now.Subtract(track.date).Minutes > 30)
-                    {
-                        window.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "!") },
-                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, "You haven't submitted a song to Last.fm in the last 30 minutes.  Maybe Last.fm submission service is down?") });
-                    }
-                    else
-                    {
-                        string action = "is listening to " + track.name + " by " + track.artist;
-                        IRC.SendMessage(SendType.Action, target, action);
-
-                        window.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "* "),
-                                                            new ColorTextPair(Options.TextFore, IRC.Nickname) },
-                                      new ColorTextPair[] { new ColorTextPair(Options.TextFore, action) });
-                    }
-                    break;
-                }
-            }
-            catch (Exception ex)
-            {
-                window.Output(new ColorTextPair[] { new ColorTextPair(Options.TextFore, "!") },
-                              new ColorTextPair[] { new ColorTextPair(Options.TextFore, ex.Message) });
-            }
-        }
 
         public static void AppendAndMaybeScrollToBottom(System.Windows.Controls.TextBox box, string text)
         {

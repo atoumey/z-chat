@@ -237,7 +237,7 @@ namespace ZChat
             Output(new ColorTextPair[] { new ColorTextPair(Brushes.Black, "") }, new ColorTextPair[] { new ColorTextPair(Brushes.Black, output) });
         }
 
-        public void Output(ColorTextPair[] sourcePairs, ColorTextPair[] textPairs)
+        public void Output(IEnumerable<ColorTextPair> sourcePairs, IEnumerable<ColorTextPair> textPairs)
         {
             if (Document == null || DocumentScrollViewer == null) return;
 
@@ -278,10 +278,10 @@ namespace ZChat
             timeRun.Foreground = ZChat.Options.TimeFore;
             p.Inlines.Add(timeRun);
 
-            ColorTextPair[] allPairs = new ColorTextPair[group.Source.Length + 1 + group.Text.Length];
-            for (int ii = 0; ii < group.Source.Length; ii++) allPairs[ii] = group.Source[ii];
-            allPairs[group.Source.Length] = new ColorTextPair(ZChat.Options.TextFore, " ");
-            for (int ii = 0; ii < group.Text.Length; ii++) allPairs[ii + group.Source.Length + 1] = group.Text[ii];
+            List<ColorTextPair> allPairs = new List<ColorTextPair>();
+            allPairs.AddRange(group.Source);
+            allPairs.Add(new ColorTextPair(ZChat.Options.TextFore, " "));
+            allPairs.AddRange(group.Text);
 
             AddInlines(p.Inlines, allPairs, true);
 
@@ -295,7 +295,7 @@ namespace ZChat
             Document.Blocks.Add(p);
         }
 
-        public void AddInlines(InlineCollection inlineCollection, ColorTextPair[] pairs, bool allowHyperlinks)
+        public void AddInlines(InlineCollection inlineCollection, IEnumerable<ColorTextPair> pairs, bool allowHyperlinks)
         {
             Run run;
             foreach (ColorTextPair pair in pairs)
@@ -367,7 +367,7 @@ namespace ZChat
             else
                 inlines.Add(r);
         }
-
+        
         private void AddNonHyperlinkText(InlineCollection inlines, string text, SolidColorBrush brush)
         {
             int mostRecentBoldCharPos = 0;
@@ -385,7 +385,7 @@ namespace ZChat
             AddBoldOrRun(inlines, text.Substring(mostRecentBoldCharPos, text.Length - mostRecentBoldCharPos), brush, boldOn);
         }
 
-        public string PairsToPlainText(ColorTextPair[] colorTextPairs)
+        public string PairsToPlainText(IEnumerable<ColorTextPair> colorTextPairs)
         {
             StringBuilder sb = new StringBuilder();
             foreach (ColorTextPair ctp in colorTextPairs)
@@ -421,10 +421,10 @@ namespace ZChat
     public struct TimeSourceTextGroup
     {
         public string Time;
-        public ColorTextPair[] Source;
-        public ColorTextPair[] Text;
+        public IEnumerable<ColorTextPair> Source;
+        public IEnumerable<ColorTextPair> Text;
 
-        public TimeSourceTextGroup(string time, ColorTextPair[] source, ColorTextPair[] text)
+        public TimeSourceTextGroup(string time, IEnumerable<ColorTextPair> source, IEnumerable<ColorTextPair> text)
         {
             Time = time;
             Source = source;
