@@ -454,8 +454,6 @@ namespace ZChat
 
         public void TakeOutgoingQueryMessage(string nick, string message)
         {
-            ZChat.IRC.SendMessage(SendType.Message, nick, message);
-
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.Options.QueryTextFore, "->*" + nick + "*") },
                                    new ColorTextPair[] { new ColorTextPair(ZChat.Options.QueryTextFore, message) });
         }

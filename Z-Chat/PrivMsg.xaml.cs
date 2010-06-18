@@ -150,8 +150,6 @@ namespace ZChat
 
         private void SendMessage(string input)
         {
-            ZChat.IRC.SendMessage(SendType.Message, QueriedUser, input);
-
             Output(new ColorTextPair[] { new ColorTextPair(ZChat.Options.BracketFore, "<"),
                                                  new ColorTextPair(ZChat.Options.OwnNickFore, ZChat.IRC.Nickname),
                                                  new ColorTextPair(ZChat.Options.BracketFore, ">") },

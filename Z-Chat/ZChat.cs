@@ -650,6 +650,9 @@ namespace ZChat
                         if (words.Length >= 3)
                         {
                             string msgText = input.Substring(input.IndexOf(" " + words[1] + " ") + words[1].Length + 2);
+                            if (OnSentMessage != null)
+                                OnSentMessage(SendType.Message, target, msgText);
+                            IRC.SendMessage(SendType.Message, target, msgText);
                             SendQueryMessage(otherTarget, msgText);
                         }
                         else syntaxError = true;
@@ -715,6 +718,9 @@ namespace ZChat
                 }
                 else if (!string.IsNullOrEmpty(input))
                 {
+                    if (OnSentMessage != null)
+                        OnSentMessage(SendType.Message, target, input);
+
                     IRC.SendMessage(SendType.Message, target, input);
 
                     sender.Output(new ColorTextPair[] { new ColorTextPair(Options.BracketFore, "<"),
@@ -728,6 +734,9 @@ namespace ZChat
                 Error.ShowError(ex);
             }
         }
+
+        public event SentMessageHandler OnSentMessage;
+        public delegate void SentMessageHandler (SendType type, string target, string message);
 
         private void LastFMdownloadComplete(object sender, DownloadStringCompletedEventArgs e)
         {
